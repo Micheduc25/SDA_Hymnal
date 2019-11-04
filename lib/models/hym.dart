@@ -18,7 +18,7 @@ class Hym {
   Map<String, dynamic> toMap() {
     String allVerses = "";
     this.verses.forEach((index, verse) {
-      allVerses += index.toString() + "  " + verse + "\n \n";
+      allVerses += index.toString() + "\n\n" + verse + "\n \n";
     });
     return {
       'id': this.id,
