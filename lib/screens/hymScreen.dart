@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sda_hymnal/components/appDrawer.dart';
 import 'package:sda_hymnal/db/dbConnection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -77,7 +78,9 @@ class _HymScreenState extends State<HymScreen> {
                   title: TextStyle(color: Colors.white, fontSize: 20)))),
       title: 'Hym Screen',
       home: Scaffold(
-        drawer: Drawer(),
+        drawer: Drawer(
+          child: MyDrawer(),
+        ),
         appBar: AppBar(
           title: Text(widget.title),
           centerTitle: true,

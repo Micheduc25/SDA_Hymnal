@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:sda_hymnal/components/appDrawer.dart';
 import 'package:sda_hymnal/components/homeSelect.dart';
 import 'package:sda_hymnal/db/dbConnection.dart';
+import 'package:sda_hymnal/screens/alphabeticSearch.dart';
+import 'package:sda_hymnal/screens/favoritesScreen.dart';
 import 'package:sda_hymnal/screens/hymScreen.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sda_hymnal/screens/wordSearch.dart';
+
 
 class HomeScreen extends StatelessWidget {
   @override
@@ -54,6 +57,7 @@ class _HomeScreenBodyState extends State<HomeScreenBody> {
 
   @override
   Widget build(BuildContext context) {
+    var size = MediaQuery.of(context).size;
     return SingleChildScrollView(
       child: Container(
         padding: EdgeInsets.all(20),
@@ -146,8 +150,13 @@ class _HomeScreenBodyState extends State<HomeScreenBody> {
                   child: Container(
                     alignment: Alignment.center,
                     width: double.infinity,
+                    // constraints: BoxConstraints(
+                    //   minHeight: MediaQuery.of(context).size.height * 0.60,
+                    //   maxHeight: MediaQuery.of(context).size.height,
+                    // ),
                     height: MediaQuery.of(context).size.height * 0.60,
                     child: GridView(
+                      // physics: NeverScrollableScrollPhysics(),
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
                         crossAxisSpacing: 10,
@@ -155,34 +164,46 @@ class _HomeScreenBodyState extends State<HomeScreenBody> {
                       ),
                       children: <Widget>[
                         FittedBox(
-                          fit: BoxFit.cover,
+                          fit: size.width > size.height
+                              ? BoxFit.contain
+                              : BoxFit.cover,
                           child: Choice(
                             image: "search.png",
                             onClick: () {
-                              print("search clicked");
+                              Navigator.of(context).push(MaterialPageRoute(
+                                  builder: (context) => SearchScreen()));
                             },
                           ),
                         ),
                         FittedBox(
-                          fit: BoxFit.cover,
+                          fit: size.width > size.height
+                              ? BoxFit.contain
+                              : BoxFit.cover,
                           child: Choice(
                             image: "a_z.png",
                             onClick: () {
-                              print("search clicked");
+                              Navigator.of(context).push(MaterialPageRoute(
+                                  builder: (context) =>
+                                      AlphabeticSearchScreen()));
                             },
                           ),
                         ),
                         FittedBox(
-                          fit: BoxFit.cover,
+                          fit: size.width > size.height
+                              ? BoxFit.contain
+                              : BoxFit.cover,
                           child: Choice(
                             image: "favorite.png",
                             onClick: () {
-                              print("search clicked");
+                              Navigator.of(context).push(MaterialPageRoute(
+                                  builder: (context) => FavoriteScreen()));
                             },
                           ),
                         ),
                         FittedBox(
-                            fit: BoxFit.cover,
+                            fit: size.width > size.height
+                                ? BoxFit.contain
+                                : BoxFit.cover,
                             child: Choice(
                               image: "theme.png",
                               onClick: () {

@@ -73,8 +73,9 @@ class DBConnect {
       final List<Map<String, dynamic>> hyms =
           await db.rawQuery("SELECT number,title,author,verses FROM hyms");
       // print(hyms.toString());
+      print("successful retrieval   ");
 
-      db.close();
+      // db.close();
       return hyms;
     } catch (e) {
       print("an error occured while retrieving data " + e.toString());
@@ -141,16 +142,20 @@ class DBConnect {
   Future<List<int>> getFavorites() async {
     Database db = await database;
 
-    List<Map<String, dynamic>> favorites =
-        await db.query("favorites", orderBy: "ASC");
-    List<int> finalList;
+    List<Map<String, dynamic>> favorites = await db.query("favorites");
+    if (favorites != null) {
+      List<int> finalList = [];
 
-    favorites.forEach((fav) {
-      finalList.add(fav['number']);
-    });
+      favorites.forEach((fav) {
+        finalList.add(fav['number']);
+      });
 
-    db.close();
-    return finalList;
+      db.close();
+      return finalList;
+    } else {
+      db.close();
+      return null;
+    }
   }
 
   Future<void> removeFavorite(int number) async {
