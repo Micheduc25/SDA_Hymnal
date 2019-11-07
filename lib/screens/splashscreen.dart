@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:sda_hymnal/db/connectDB.dart';
 import 'package:sda_hymnal/screens/homeScreen.dart';
 
 class SplashScreen extends StatelessWidget {
@@ -21,15 +22,25 @@ class SplashBody extends StatefulWidget {
 }
 
 class _SplashBodyState extends State<SplashBody> {
-  bool loading;
-  Timer splashTimer;
+  bool _loading;
+ 
 
   @override
   void initState() {
     super.initState();
-    splashTimer = Timer(Duration(seconds: 4), endTimer);
 
-    loading = true;
+   _loading=true;
+    ConnectDB().setHyms().then(
+      (_){
+        setState(() {
+         _loading=false; 
+
+        });
+
+        Navigator.of(context)
+        .pushReplacement(MaterialPageRoute(builder: (context) => HomeScreen()));
+      }
+    );
   }
 
   @override
@@ -63,7 +74,7 @@ class _SplashBodyState extends State<SplashBody> {
                 )
               ],
             ),
-            loading
+            _loading
                 ? CircularProgressIndicator(
                     backgroundColor: Colors.green,
                     strokeWidth: 7,
@@ -75,12 +86,5 @@ class _SplashBodyState extends State<SplashBody> {
     );
   }
 
-  void endTimer() {
-    setState(() {
-      loading = false;
-    });
-
-    Navigator.of(context)
-        .pushReplacement(MaterialPageRoute(builder: (context) => HomeScreen()));
-  }
+ 
 }

@@ -41,7 +41,7 @@ class HelperFunctions {
     }
     return Hym(
         author: map["author"],
-        id: map["id"],
+        
         number: map["number"],
         verses: myversesMap,
         noVerses: map["no_verses"],
@@ -180,5 +180,100 @@ class HelperFunctions {
 
     // print("hyms in alphabetic are    " + finalHyms.toString());
     return finalHyms;
+  }
+
+  static String getHymCategory(int hymNumber){
+
+    if((hymNumber>=1&&hymNumber<=69)||(hymNumber>=696&&hymNumber<=708)){
+      return "Worship";
+    }
+
+    else if((hymNumber>=70&&hymNumber<=73)||hymNumber==709){
+      return "Trinity";
+    }
+
+    else if((hymNumber>=74&&hymNumber<=114)){
+      return "God the Father";
+    }
+
+    else if((hymNumber>=115&&hymNumber<=256)){
+      return "Jesus Christ";
+    }
+
+    else if((hymNumber>=257&&hymNumber<=270)){
+      return "Holy Spirit";
+    }
+
+    else if((hymNumber>=271&&hymNumber<=278)){
+      return "Holy Scriptures";
+    }
+
+    else if((hymNumber>=279&&hymNumber<=343)){
+      return "Gospel";
+    }
+
+    else if((hymNumber>=344&&hymNumber<=379)){
+      return "Christian Church";
+    }
+
+    else if((hymNumber>=380&&hymNumber<=420)){
+      return "Doctrines";
+    }
+
+    else if((hymNumber>=438&&hymNumber<=454)){
+      return "Early Advent";
+    }
+
+    else if((hymNumber>=455&&hymNumber<=649)){
+      return "Christian Life";
+    }
+
+    else if((hymNumber>=650&&hymNumber<=659)){
+      return "Christian Home";
+    }
+
+    else if((hymNumber>=660&&hymNumber<=695)){
+      return "Sentences and Responses";
+    }
+
+    else if((hymNumber>=696&&hymNumber<=920)){
+      return "Worship Aids";
+    }
+
+    return null;
+    
+  }
+
+
+  static Future<Map<String,List< Map<String,dynamic>>>> getAllHymsByCategory()async{
+
+    List<String> categories=["Worship", 'Trinity', 'God the Father',
+    
+    'Jesus Christ', 'Holy Spirit', 'Holy Scriptures', 'Gospel', 
+    'Christian Church',
+    'Doctrines', 'Early Advent', 'Christian Life', 'Christian Home', 
+    'Sentences and Responses',
+    'Worship Aids'
+    ];
+
+    List<Map<String,dynamic>> allHyms=await DBConnect().getHyms();
+    Map<String,List< Map<String,dynamic>>> hymsByCategory={};
+
+    categories.forEach((category){
+
+      hymsByCategory[category]=allHyms.where(
+        (hym){
+
+        if(hym['category'].toUpperCase()==category.toUpperCase()){
+          return true;
+        }
+        else{
+          return false;
+        }
+      }).toList();
+    });
+
+
+    return hymsByCategory;
   }
 }

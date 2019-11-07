@@ -3,6 +3,7 @@ import 'package:sda_hymnal/components/appDrawer.dart';
 import 'package:sda_hymnal/components/homeSelect.dart';
 import 'package:sda_hymnal/db/dbConnection.dart';
 import 'package:sda_hymnal/screens/alphabeticSearch.dart';
+import 'package:sda_hymnal/screens/categorySearch.dart';
 import 'package:sda_hymnal/screens/favoritesScreen.dart';
 import 'package:sda_hymnal/screens/hymScreen.dart';
 import 'package:sda_hymnal/screens/wordSearch.dart';
@@ -207,7 +208,8 @@ class _HomeScreenBodyState extends State<HomeScreenBody> {
                             child: Choice(
                               image: "theme.png",
                               onClick: () {
-                                print("search clicked");
+                                Navigator.of(context).push(MaterialPageRoute(
+                                  builder: (context) => CategorySearchScreen()));
                               },
                             )),
                       ],

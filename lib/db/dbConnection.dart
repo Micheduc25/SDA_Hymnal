@@ -17,9 +17,8 @@ class DBConnect {
 
       join(getDatabasesPath().toString(), 'hymnal_database.db'),
       onOpen: (db) {
-        print("Creating table favorites ");
-        // Run the CREATE TABLE statement on the database.
-
+        // print("Creating table favorites ");
+        
         // return db.execute(
         //     '''CREATE TABLE favorites (id INTEGER NOT NULL  PRIMARY KEY AUTOINCREMENT,
         // number INTEGER NOT NULL);''');
@@ -29,11 +28,14 @@ class DBConnect {
       },
 
       onCreate: (db, version) {
-        print("The db is " + db.toString());
-        // Run the CREATE TABLE statement on the database.
-        print("Table to be created...");
-        return db.execute(
-            "CREATE TABLE hyms(id INTEGER PRIMARY KEY, number INTEGER, title VARCHAR(20) NOT NULL, author VARCHAR(30), no_verses INTEGER, verses TEXT NOT NULL);");
+        // print("The db is " + db.toString());
+        // // Run the CREATE TABLE statement on the database.
+        // db.execute(
+        //     '''CREATE TABLE favorites (id INTEGER NOT NULL  PRIMARY KEY AUTOINCREMENT,
+        // number INTEGER NOT NULL);''');
+        // print("Table to be created...");
+        // return db.execute(
+        //     "CREATE TABLE hyms(id INTEGER PRIMARY KEY, number INTEGER, title VARCHAR(20) NOT NULL, author VARCHAR(30), no_verses INTEGER, verses TEXT NOT NULL);");
       },
       // Set the version. This executes the onCreate function and provides a
       // path to perform database upgrades and downgrades.
@@ -71,7 +73,7 @@ class DBConnect {
 
     try {
       final List<Map<String, dynamic>> hyms =
-          await db.rawQuery("SELECT number,title,author,verses FROM hyms");
+          await db.rawQuery("SELECT number,title,author,verses,category FROM hyms");
       // print(hyms.toString());
       print("successful retrieval   ");
 

@@ -1,15 +1,14 @@
-
 import 'package:flutter/material.dart';
 import 'package:sda_hymnal/components/appDrawer.dart';
 import 'package:sda_hymnal/screens/hymScreen.dart';
 import 'package:sda_hymnal/utils/helperFunctions.dart';
 
-class AlphabeticSearchScreen extends StatefulWidget {
+class CategorySearchScreen extends StatefulWidget {
   @override
-  _AlphabeticSearchScreenState createState() => _AlphabeticSearchScreenState();
+  _CategorySearchScreenState createState() => _CategorySearchScreenState();
 }
 
-class _AlphabeticSearchScreenState extends State<AlphabeticSearchScreen> {
+class _CategorySearchScreenState extends State<CategorySearchScreen> {
   Map<String, List<Map<String, dynamic>>> hyms;
   Map<String, List<Widget>> allEntries;
   List<String> allKeys;
@@ -20,7 +19,7 @@ class _AlphabeticSearchScreenState extends State<AlphabeticSearchScreen> {
     super.initState();
     _loading = true;
 
-    HelperFunctions.getAllHymsByFirstLetters().then((hymsList) {
+    HelperFunctions.getAllHymsByCategory().then((hymsList) {
       setState(() {
         hyms = hymsList;
         allEntries = hymEntries(hyms, context);
@@ -39,10 +38,10 @@ class _AlphabeticSearchScreenState extends State<AlphabeticSearchScreen> {
           appBarTheme: AppBarTheme(
               textTheme: TextTheme(
                   title: TextStyle(color: Colors.white, fontSize: 20)))),
-      title: 'alphabetic search screen',
+      title: 'category search screen',
       home: Scaffold(
         appBar: AppBar(
-          title: Text('Alphabetic Index'),
+          title: Text('Search by Theme'),
           centerTitle: true,
           automaticallyImplyLeading: true,
         ),
@@ -56,7 +55,7 @@ class _AlphabeticSearchScreenState extends State<AlphabeticSearchScreen> {
                         Column(
                           children: <Widget>[
                             ExpansionTile(
-                              leading: Icon(Icons.queue_music),
+                              leading: Icon(Icons.library_music),
                               title: Text(
                                 allKeys[index].toUpperCase(),
                                 style: TextStyle(fontSize: 20,fontWeight: FontWeight.bold),
@@ -83,11 +82,11 @@ class _AlphabeticSearchScreenState extends State<AlphabeticSearchScreen> {
 
 Map<String, List<Widget>> hymEntries(
     Map<String, List<Map<String, dynamic>>> rawHyms, BuildContext context) {
-//  Map<String,List<List<Widget>>> result = {};
+
 
   Map<String, List<Widget>> currChildrenMap = {};
 
-  rawHyms.forEach((letter, hyms) {
+  rawHyms.forEach((category, hyms) {
     List<Widget> currChildren = [];
 
     hyms.forEach((hym) {
@@ -108,7 +107,7 @@ Map<String, List<Widget>> hymEntries(
       ));
     });
 
-    currChildrenMap[letter] = currChildren;
+    currChildrenMap[category] = currChildren;
   });
 
   return currChildrenMap;

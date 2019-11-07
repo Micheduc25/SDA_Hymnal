@@ -1,19 +1,39 @@
 class Hym {
-  final int id;
+  
   final int number;
   final String title;
   final String author;
   final int noVerses;
+  final String category;
 
-  final Map<int, String> verses;
+  final Map<dynamic, String> verses;
 
   Hym(
-      {this.id,
+      {
       this.number,
       this.noVerses,
       this.title,
       this.verses,
-      this.author});
+      this.author,
+      this.category});
+
+  factory Hym.fromMap(Map<String,dynamic> hymMap){
+
+    return Hym(
+      
+      number: hymMap['number'],
+      noVerses: hymMap['no_verses'],
+      title: hymMap['title'],
+      verses: hymMap['verses'],
+      author: hymMap['author'],
+      category: hymMap['category']
+    );
+  }
+
+  @override
+  toString(){
+    return this.toMap().toString();
+  }
 
   Map<String, dynamic> toMap() {
     String allVerses = "";
@@ -21,12 +41,13 @@ class Hym {
       allVerses += index.toString() + "\n\n" + verse + "\n \n";
     });
     return {
-      'id': this.id,
       'number': this.number,
       'title': this.title,
       'author': this.author,
       'verses': allVerses,
-      'no_verses': this.noVerses
+      'no_verses': this.noVerses,
+      'category':this.category
+      
     };
   }
 }
