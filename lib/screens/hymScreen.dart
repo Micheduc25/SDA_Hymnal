@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sda_hymnal/components/appDrawer.dart';
+import 'package:sda_hymnal/components/musicBar.dart';
 import 'package:sda_hymnal/db/dbConnection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -86,6 +87,7 @@ class _HymScreenState extends State<HymScreen> {
           centerTitle: true,
           automaticallyImplyLeading: true,
         ),
+        
         body: SingleChildScrollView(
           child: Container(
               child: Stack(
@@ -326,6 +328,8 @@ class _HymScreenState extends State<HymScreen> {
             ],
           )),
         ),
+
+        bottomSheet: MusicBar(),
       ),
     );
   }

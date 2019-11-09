@@ -37,7 +37,8 @@ class _CategorySearchScreenState extends State<CategorySearchScreen> {
           primaryIconTheme: IconThemeData(color: Colors.white),
           appBarTheme: AppBarTheme(
               textTheme: TextTheme(
-                  title: TextStyle(color: Colors.white, fontSize: 20)))),
+                  title: TextStyle(
+                  color: Colors.white, fontSize: 20)))),
       title: 'category search screen',
       home: Scaffold(
         appBar: AppBar(
@@ -102,7 +103,9 @@ Map<String, List<Widget>> hymEntries(
                     title: hym["title"],
                     number: hym["number"],
                     content: hym["verses"],
-                  )));
+                  ))
+                  
+                  );
         },
       ));
     });

@@ -5,6 +5,7 @@ import 'package:sda_hymnal/screens/homeScreen.dart';
 import 'package:sda_hymnal/screens/hymScreen.dart';
 import 'package:sda_hymnal/screens/splashscreen.dart';
 
+
 void main() => runApp(MyApp());
 
 class MyApp extends StatefulWidget {
@@ -14,8 +15,13 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+ 
+  
+  
+  
   @override
   Widget build(BuildContext context) {
+     
     return MaterialApp(
         routes: {
           'splash': (context) => SplashScreen(),
