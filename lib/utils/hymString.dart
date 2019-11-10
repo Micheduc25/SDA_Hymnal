@@ -1,3 +1,4 @@
+import 'package:sda_hymnal/db/dbConnection.dart';
 import 'package:sda_hymnal/models/hym.dart';
 import 'package:sda_hymnal/utils/helperFunctions.dart';
 
@@ -1287,6 +1288,7 @@ int i=0;
         i++;
       }
     });
+
     
    
 
@@ -1297,15 +1299,17 @@ int i=0;
         title: title,
         noVerses: individualVerses.length,
         verses: versesMap,
-        category: HelperFunctions.getHymCategory(int.parse(number))
+        category: HelperFunctions.getHymCategory(int.parse(number)),
+        musicFile: "hym_$number.mp3"
         );
   }
 
-  List<Hym> createAllHyms(){
+  List<Hym> createAllHyms() {
     List <Hym> finalHyms=[];
 
     allHyms.forEach((hym){
-      finalHyms.add(_toHym(hym));
+      
+      finalHyms.add(  _toHym(hym));
     });
 
     return finalHyms;

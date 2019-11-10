@@ -87,7 +87,6 @@ class _HymScreenState extends State<HymScreen> {
           centerTitle: true,
           automaticallyImplyLeading: true,
         ),
-        
         body: SingleChildScrollView(
           child: Container(
               child: Stack(
@@ -298,6 +297,7 @@ class _HymScreenState extends State<HymScreen> {
                             child: Column(children: [
                               Text(
                                 "${widget.number} - ${widget.title}",
+                                textAlign: TextAlign.center,
                                 style: TextStyle(
                                     fontSize: 22 * globalFontRatio,
                                     fontWeight: FontWeight.w900),
@@ -314,6 +314,9 @@ class _HymScreenState extends State<HymScreen> {
                             ]),
                           )
                         ]),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.only(bottom: 90),
                   )
                 ],
               ),
@@ -328,8 +331,7 @@ class _HymScreenState extends State<HymScreen> {
             ],
           )),
         ),
-
-        bottomSheet: MusicBar(),
+        bottomSheet: MusicBar(hymNumber: widget.number),
       ),
     );
   }

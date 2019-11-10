@@ -50,7 +50,8 @@ class Hym {
       'author': this.author,
       'verses': allVerses,
       'no_verses': this.noVerses,
-      'category':this.category
+      'category':this.category,
+      'music_file':this.musicFile
       
     };
   }

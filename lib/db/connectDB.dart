@@ -33,14 +33,8 @@ class ConnectDB{
       }
        await db.execute(
             '''CREATE TABLE hyms(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, number INTEGER, title VARCHAR(20)
-             NOT NULL, author VARCHAR(30), no_verses INTEGER, verses TEXT NOT NULL, category VARCHAR(20));''');
-
-
-        await db.execute(
-          '''CREATE TABLE hym_music(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, hym_number INTEGER NOT NULL,
-          
-            music_file VARCHAR(20) NOT NULL)'''
-        );
+             NOT NULL, author VARCHAR(30), no_verses INTEGER, verses TEXT NOT NULL, category VARCHAR(20),
+              music_file VARCHAR(20) NOT NULL);''');
 
       },
 

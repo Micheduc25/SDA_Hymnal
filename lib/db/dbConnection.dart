@@ -79,7 +79,7 @@ class DBConnect {
 
     try {
       final List<Map<String, dynamic>> hyms =
-          await db.rawQuery("SELECT number,title,author,verses,category FROM hyms");
+          await db.rawQuery("SELECT number,title,author,verses,category, music_file FROM hyms");
       // print(hyms.toString());
       print("successful retrieval   ");
 
@@ -175,7 +175,10 @@ class DBConnect {
     } catch (e) {
       print("error while deleting" + e.toString());
     }
+
+    db.close();
   }
+
 }
 
 // Create a hym and add it to the hym table.

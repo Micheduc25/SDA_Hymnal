@@ -13,7 +13,19 @@ class MusicBarProvider with ChangeNotifier{
   AudioPlayer _audioPlayer= new AudioPlayer();
   AudioCache _audioCache = new AudioCache();
 
+  
+
+  int _songDuration;
+
+  set setDuration(int value){
+   
+    _songDuration=value;
+  }
+
+  int get getDuration=>_songDuration;
+
   set setConstraintWidth(double value){
+  
     _constraintWidth=value;
     // notifyListeners();
   }
