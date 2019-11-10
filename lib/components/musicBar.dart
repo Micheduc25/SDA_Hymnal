@@ -1,3 +1,4 @@
+import 'package:audioplayers/audio_cache.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sda_hymnal/provider/musicBarProvider.dart';
@@ -11,6 +12,15 @@ class MusicBar extends StatefulWidget {
 }
 
 class _MusicBarState extends State<MusicBar> {
+
+  AudioCache audioCache;
+  @override
+  void initState() {
+
+    super.initState();
+    audioCache=new AudioCache();
+    
+  }
  
   @override
   Widget build(BuildContext context) {
@@ -50,7 +60,8 @@ class _MusicBarState extends State<MusicBar> {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: <Widget>[
                   new MusicBarItem(icon: Icons.play_arrow, onClick: (){
-                      data.playSong();
+                      // data.playSong();
+                      audioCache.play("hym1.mp3");
                     },),
                     new MusicBarItem(icon: Icons.pause, onClick: (){},),
                     new MusicBarItem(icon: Icons.stop, onClick: (){},)

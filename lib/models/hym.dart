@@ -5,6 +5,7 @@ class Hym {
   final String author;
   final int noVerses;
   final String category;
+  final String musicFile;
 
   final Map<dynamic, String> verses;
 
@@ -15,7 +16,8 @@ class Hym {
       this.title,
       this.verses,
       this.author,
-      this.category});
+      this.category,
+      this.musicFile});
 
   factory Hym.fromMap(Map<String,dynamic> hymMap){
 
@@ -30,6 +32,8 @@ class Hym {
     );
   }
 
+ String  get getMusicFileName=>this.musicFile;
+ int get getHymNumber=>this.number;
   @override
   toString(){
     return this.toMap().toString();

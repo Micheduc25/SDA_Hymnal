@@ -26,19 +26,7 @@ class ConnectDB{
       },
 
       onOpen: (db)async{
-        //some code to  be done here
-        // try {
-        //   await db.execute("DROP TABLE hyms");
-        //   await db.execute("DROP TABLE favorites");
-        // } on DatabaseException catch (e) {
-        //           print("no such hym or favorite table");
-        // }
-        
-        //   await db.execute(
-        //     '''CREATE TABLE favorites (id INTEGER NOT NULL  PRIMARY KEY AUTOINCREMENT,
-        // number INTEGER NOT NULL);''');
-
-      //   print("Table to be created...in ONOPen");
+       
       try{ await db.execute("DROP TABLE hyms");}
       catch(e){
         print("table no exist");
@@ -46,6 +34,13 @@ class ConnectDB{
        await db.execute(
             '''CREATE TABLE hyms(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, number INTEGER, title VARCHAR(20)
              NOT NULL, author VARCHAR(30), no_verses INTEGER, verses TEXT NOT NULL, category VARCHAR(20));''');
+
+
+        await db.execute(
+          '''CREATE TABLE hym_music(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, hym_number INTEGER NOT NULL,
+          
+            music_file VARCHAR(20) NOT NULL)'''
+        );
 
       },
 

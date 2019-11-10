@@ -9,15 +9,12 @@ import 'package:sda_hymnal/screens/splashscreen.dart';
 void main() => runApp(MyApp());
 
 class MyApp extends StatefulWidget {
-  // This widget is the root of your application.
+  
   @override
   _MyAppState createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> {
- 
-  
-  
   
   @override
   Widget build(BuildContext context) {
@@ -27,7 +24,7 @@ class _MyAppState extends State<MyApp> {
           'splash': (context) => SplashScreen(),
           'home': (context) => HomeScreen()
         },
-        title: 'Flutter Demo',
+        title: 'SDA Hym App',
         theme: ThemeData(
           primarySwatch: Colors.blue,
         ),
