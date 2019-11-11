@@ -59,14 +59,7 @@ class DBConnect {
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
 
-      try{await db.insert("hym_music", {
-        "hym_number":hym.getHymNumber,
-        "music_file":hym.getMusicFileName!=null?hym.getMusicFileName:throw NullThrownError
-      });}
-      catch(e){
-        print("Hym has no music file yet  "+e.toString());
-      }
-
+     
       return true;
     } catch (e) {
       print("An error occured while adding the table :  " + e.toString());

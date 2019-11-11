@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "64102198202",
+    "firebase_url": "https://sda-hymnal-5028c.firebaseio.com",
+    "project_id": "sda-hymnal-5028c",
+    "storage_bucket": "sda-hymnal-5028c.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:64102198202:android:d1429404858c6fe50d8b83",
+        "android_client_info": {
+          "package_name": "app.micheduc25.com.sda_hymnal"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "64102198202-34f3k37soaksjbb1tkbnnudhi5p3jkg7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBoyaCDzA9wY8NSZ24tKhTzp8XDCAxutcM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "64102198202-34f3k37soaksjbb1tkbnnudhi5p3jkg7.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

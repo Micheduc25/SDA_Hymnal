@@ -21,7 +21,8 @@ class ConnectDB{
         print("Table to be created... in OnCreate");
        await db.execute(
             '''CREATE TABLE hyms(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, number INTEGER, title VARCHAR(20)
-             NOT NULL, author VARCHAR(30), no_verses INTEGER, verses TEXT NOT NULL);''');
+             NOT NULL, author VARCHAR(30), no_verses INTEGER, verses TEXT NOT NULL, category VARCHAR(20),
+              music_file VARCHAR(20) NOT NULL);''');
 
       },
 

@@ -183,7 +183,7 @@ class HelperFunctions {
   }
 
   static String getHymCategory(int hymNumber){
-
+  
     if((hymNumber>=1&&hymNumber<=69)||(hymNumber>=696&&hymNumber<=708)){
       return "Worship";
     }
@@ -220,6 +220,10 @@ class HelperFunctions {
       return "Doctrines";
     }
 
+    else if((hymNumber>=421&&hymNumber<=437)){
+      return "General";
+    }
+
     else if((hymNumber>=438&&hymNumber<=454)){
       return "Early Advent";
     }
@@ -251,20 +255,23 @@ class HelperFunctions {
     
     'Jesus Christ', 'Holy Spirit', 'Holy Scriptures', 'Gospel', 
     'Christian Church',
-    'Doctrines', 'Early Advent', 'Christian Life', 'Christian Home', 
+    'Doctrines', 'General', 'Early Advent', 'Christian Life', 'Christian Home', 
     'Sentences and Responses',
     'Worship Aids'
     ];
 
     List<Map<String,dynamic>> allHyms=await DBConnect().getHyms();
+
     Map<String,List< Map<String,dynamic>>> hymsByCategory={};
 
     categories.forEach((category){
 
       hymsByCategory[category]=allHyms.where(
         (hym){
-
+          
+       
         if(hym['category'].toUpperCase()==category.toUpperCase()){
+          
           return true;
         }
         else{

@@ -1,6 +1,10 @@
+import 'dart:io';
+import 'package:path/path.dart';
+
 import 'package:sda_hymnal/db/dbConnection.dart';
 import 'package:sda_hymnal/models/hym.dart';
 import 'package:sda_hymnal/utils/helperFunctions.dart';
+import 'package:sda_hymnal/utils/otherHyms.dart';
 
 class AllHyms {
   List<String> allHyms = [
@@ -2435,6 +2439,8 @@ Alleluia! Alleluia!
 Alleluia! Amen.'''
   ];
 
+ 
+
   Hym _toHym(String rawHym) {
     Map<dynamic, String> versesMap = {};
     // String verses=' errror causing';
@@ -2453,7 +2459,7 @@ Alleluia! Amen.'''
 
 //     print("individual verses are ${individualVerses.toString()}");
 
-    print("good till here,");
+    // print("good till here,");
     int i = 0;
   
     individualVerses.forEach((hym) {
@@ -2461,7 +2467,7 @@ Alleluia! Amen.'''
       try {
         versesMap[hym.split('\n\n')[0]] = hym.split('\n\n')[1];
       } catch (e) {
-        print("error on item $i");
+        print("error on item $i hym $number");
         print("\n $e");
       } finally {
         i++;
@@ -2479,9 +2485,20 @@ Alleluia! Amen.'''
   }
 
   List<Hym> createAllHyms() {
+    List<String> joinedHyms=[];
+    allHyms.forEach((hym){
+      joinedHyms.add(hym);
+    });
+
+    OtherHyms.lastHyms.forEach((hym){
+      joinedHyms.add(hym);
+    });
+
+
+    
     List<Hym> finalHyms = [];
 
-    allHyms.forEach((hym) {
+    joinedHyms.forEach((hym) {
       finalHyms.add(_toHym(hym));
     });
 
