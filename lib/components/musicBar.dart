@@ -109,6 +109,11 @@ class _MusicBarState extends State<MusicBar> {
                                 setState(() {
                                   finalPlayer = player;
                                 });
+                              }).catchError((e){
+                                setState(() {
+                                  _playState=AudioPlayerState.STOPPED;
+                                });
+                                print("Music file not available yet  "+e.toString());
                               });
                             });
                           } catch (e) {
