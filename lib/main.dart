@@ -3,6 +3,7 @@ import 'package:sda_hymnal/constants/hymsexample.dart';
 import 'package:sda_hymnal/db/dbConnection.dart';
 import 'package:sda_hymnal/screens/homeScreen.dart';
 import 'package:sda_hymnal/screens/hymScreen.dart';
+import 'package:sda_hymnal/screens/songTest.dart';
 import 'package:sda_hymnal/screens/splashscreen.dart';
 
 void main() => runApp(MyApp());

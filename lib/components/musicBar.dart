@@ -1,8 +1,12 @@
-import 'package:audioplayers/audio_cache.dart';
+import 'dart:io';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sda_hymnal/provider/musicBarProvider.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:path_provider/path_provider.dart';
+
+enum SongMode { remote, local } //enums define a list of named constants
 
 class MusicBar extends StatefulWidget {
   MusicBar({this.hymNumber});
@@ -12,28 +16,40 @@ class MusicBar extends StatefulWidget {
 }
 
 class _MusicBarState extends State<MusicBar> {
-  AudioCache audioCache;
-  AudioPlayer finalPlayer;
+  AudioPlayer _audioPlayer;
   AudioPlayerState _playState;
+  StorageReference _storage;
+  String songUrl;
+  bool _musicDownloaded;
+  SongMode _songMode;
+  String _localSongPath;
 
   @override
   void initState() {
     super.initState();
-    audioCache = new AudioCache();
+    _audioPlayer = AudioPlayer();
+    _musicDownloaded = false;
+    songUrl = "";
+    _songMode = SongMode.remote;
+    _storage = FirebaseStorage.instance
+        .ref()
+        .child("songs")
+        .child("hym_${widget.hymNumber.toString()}.mp3");
+    _storage.getDownloadURL().then((url) {
+      songUrl = url.toString();
+    }).timeout(Duration(seconds: 40), onTimeout: () {
+      print("connection timed out... please check network");
+    }).catchError((e) {
+      print("Error connecting to network ${e.toString()}");
+    });
 
     _playState = AudioPlayerState.STOPPED;
   }
 
   @override
-  void dispose() {
+  void dispose() async {
+    await _audioPlayer.dispose();
     super.dispose();
-
-    try {
-      finalPlayer.stop();
-      //  finalPlayer.dispose();
-    } catch (e) {
-      print("dispose no work  :  " + e.toString());
-    }
   }
 
   @override
@@ -61,7 +77,7 @@ class _MusicBarState extends State<MusicBar> {
               //     return
 
               //     _playState!=AudioPlayerState.STOPPED? FutureBuilder(
-              //     future:finalPlayer.getCurrentPosition() ,
+              //     future:_audioPlayer.getCurrentPosition() ,
               //     builder:(context,AsyncSnapshot<int> positionSnapshot){
 
               //       if(positionSnapshot.connectionState==ConnectionState.done){
@@ -84,84 +100,124 @@ class _MusicBarState extends State<MusicBar> {
                 // padding: EdgeInsets.all(10),
                 width: double.infinity,
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: <Widget>[
-                    new MusicBarItem(
-                      icon: Icons.play_arrow,
-                      color: _playState == AudioPlayerState.PLAYING
-                          ? Colors.blueAccent
-                          : Colors.white,
-                      onClick: () {
-                        if (_playState == AudioPlayerState.PAUSED) {
-                          finalPlayer.resume().then((int val) {
-                            setState(() {
-                              _playState = AudioPlayerState.PLAYING;
-                            });
-                          });
-                        } else if (_playState == AudioPlayerState.STOPPED) {
-                          try {
-                            setState(() {
-                              _playState = AudioPlayerState.PLAYING;
-                              audioCache
-                                  .play(
-                                      "hym_${widget.hymNumber.toString()}.mp3")
-                                  .then((player) {
-                                setState(() {
-                                  finalPlayer = player;
-                                });
-                              }).catchError((e){
-                                setState(() {
-                                  _playState=AudioPlayerState.STOPPED;
-                                });
-                                print("Music file not available yet  "+e.toString());
-                              });
-                            });
-                          } catch (e) {
-                            print(
-                                "unable to play the song : verify if hym ${widget.hymNumber.toString()} exists");
-                          }
-                        }
-                      },
-                    ),
-                    new MusicBarItem(
-                      icon: Icons.pause,
-                      color: _playState == AudioPlayerState.PAUSED
-                          ? Colors.blueAccent
-                          : Colors.white,
-                      onClick: () async {
-                        if (_playState == AudioPlayerState.PLAYING) {
-                          await finalPlayer.pause().then((int val) {
-                            setState(() {
-                              _playState = AudioPlayerState.PAUSED;
-                            });
-                          });
-                        }
-                      },
-                    ),
-                    new MusicBarItem(
-                      icon: Icons.stop,
-                      color: _playState == AudioPlayerState.STOPPED
-                          ? Colors.blueAccent
-                          : Colors.white,
-                      onClick: () {
-                        if (_playState == AudioPlayerState.PAUSED ||
-                            _playState == AudioPlayerState.PLAYING) {
-                          finalPlayer.stop().then((int val) {
-                            setState(() {
-                              _playState = AudioPlayerState.STOPPED;
-                            });
-                          });
-                        }
-                      },
-                    )
-                  ],
-                ),
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: _musicBarWidgets()),
               )
             ],
           ),
         ),
       ),
     );
+  }
+
+  List<Widget> _musicBarWidgets() {
+    List<Widget> widgets = [
+      new MusicBarItem(
+        icon: Icons.play_arrow,
+        color: _playState == AudioPlayerState.PLAYING
+            ? Colors.blueAccent
+            : Colors.white,
+        onClick: () {
+          if (_playState == AudioPlayerState.PAUSED) {
+            _audioPlayer.resume().then((int val) {
+              setState(() {
+                _playState = AudioPlayerState.PLAYING;
+              });
+            });
+          } else if (_playState == AudioPlayerState.STOPPED) {
+            try {
+              if (_songMode == SongMode.remote) {
+                _audioPlayer.play(songUrl).then((int val) {
+                  setState(() {
+                    _playState = AudioPlayerState.PLAYING;
+                  });
+                }).catchError((e) {
+                  print("Song Still loading... ${e.toString()}");
+                });
+              } else {
+                _audioPlayer
+                    .play(_localSongPath, isLocal: true)
+                    .then((int val) {
+                  setState(() {
+                    _playState = AudioPlayerState.PLAYING;
+                  });
+                }).catchError((e) {
+                  print("Song Still loading... ${e.toString()}");
+                });
+              }
+            } catch (e) {
+              print(
+                  "unable to play the song : verify if hym ${widget.hymNumber.toString()} exists");
+            }
+          }
+        },
+      ),
+      new MusicBarItem(
+        icon: Icons.pause,
+        color: _playState == AudioPlayerState.PAUSED
+            ? Colors.blueAccent
+            : Colors.white,
+        onClick: () async {
+          if (_playState == AudioPlayerState.PLAYING) {
+            await _audioPlayer.pause().then((int val) {
+              setState(() {
+                _playState = AudioPlayerState.PAUSED;
+              });
+            });
+          }
+        },
+      ),
+      new MusicBarItem(
+        icon: Icons.stop,
+        color: _playState == AudioPlayerState.STOPPED
+            ? Colors.blueAccent
+            : Colors.white,
+        onClick: () {
+          if (_playState == AudioPlayerState.PAUSED ||
+              _playState == AudioPlayerState.PLAYING) {
+            _audioPlayer.stop().then((int val) {
+              setState(() {
+                _playState = AudioPlayerState.STOPPED;
+              });
+            });
+          }
+        },
+      ),
+    ];
+
+    if (!_musicDownloaded) {
+      widgets.add(Tooltip(
+        message: "Download Melody from cloud",
+        child: InkWell(
+          child: Icon(
+            Icons.cloud_download,
+            color: Colors.white,
+            size: 40,
+          ),
+          onTap: () async {
+            String path = "";
+            await getApplicationDocumentsDirectory().then((dir) {
+              path = dir.path;
+            });
+
+            File songFile =
+                new File('$path/songs/hym_${widget.hymNumber.toString()}.mp3');
+            print(songFile.path);
+
+            String donwloadUrl = await _storage.getDownloadURL().toString();
+
+            setState(() {
+              _musicDownloaded = true;
+              _songMode = SongMode.local;
+              _localSongPath =
+                  '$path/songs/hym_${widget.hymNumber.toString()}.mp3';
+            });
+          },
+        ),
+      ));
+    }
+
+    return widgets;
   }
 }
 
