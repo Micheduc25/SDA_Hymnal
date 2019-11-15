@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:sda_hymnal/screens/Login/login.dart';
+import 'package:sda_hymnal/screens/SignUp/signUpScreen.dart';
 import 'package:sda_hymnal/screens/favoritesScreen.dart';
 import 'package:sda_hymnal/screens/homeScreen.dart';
 import 'package:sda_hymnal/screens/wordSearch.dart';
@@ -81,6 +83,23 @@ class MyDrawer extends StatelessWidget {
               onTap: () {
                 Navigator.of(context).push(
                     MaterialPageRoute(builder: (context) => SearchScreen()));
+              },
+            ),
+            Divider(
+              color: Colors.white,
+              thickness: 2,
+            ),
+            ListTile(
+              leading: Icon(
+                Icons.account_circle,
+                size: 40,
+                color: Colors.white,
+              ),
+              title: Text("Your Profile",
+                  style: TextStyle(color: Colors.white, fontSize: 20)),
+              onTap: () {
+                Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => LoginScreen()));
               },
             ),
             Divider(

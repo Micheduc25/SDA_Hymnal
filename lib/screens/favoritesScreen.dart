@@ -84,7 +84,6 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                             setState(() {
                               deleteEnable = value;
                             });
-                            print("deleteEnables is $deleteEnable");
                           },
                         ),
                       ),

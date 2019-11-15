@@ -18,7 +18,7 @@ class DBConnect {
       join(getDatabasesPath().toString(), 'hymnal_database.db'),
       onOpen: (db) {
         // print("Creating table favorites ");
-        
+
         // return db.execute(
         //     '''CREATE TABLE favorites (id INTEGER NOT NULL  PRIMARY KEY AUTOINCREMENT,
         // number INTEGER NOT NULL);''');
@@ -59,7 +59,6 @@ class DBConnect {
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
 
-     
       return true;
     } catch (e) {
       print("An error occured while adding the table :  " + e.toString());
@@ -71,8 +70,8 @@ class DBConnect {
     final Database db = await database;
 
     try {
-      final List<Map<String, dynamic>> hyms =
-          await db.rawQuery("SELECT number,title,author,verses,category, music_file FROM hyms");
+      final List<Map<String, dynamic>> hyms = await db.rawQuery(
+          "SELECT number,title,author,verses,category, music_file FROM hyms");
       // print(hyms.toString());
       print("successful retrieval   ");
 
@@ -172,6 +171,34 @@ class DBConnect {
     db.close();
   }
 
+  Future<void> addLocalFile(String fileName) async {
+    final db = await database;
+
+    await db.insert("local_hyms", {"name": fileName}).catchError((e) {
+      print("local hym not successfully added");
+      return e;
+    });
+  }
+
+  Future<List<String>> getLocalHyms() async {
+    final db = await database;
+    List<String> result = [];
+
+    List<Map<String, dynamic>> temp =
+        await db.query("local_hyms", columns: ["name"]);
+
+    temp.forEach((local) {
+      result.add(local["name"]);
+    });
+
+    return result;
+  }
+
+  Future<void> deleteLocalFile(String fileName) async {
+    final db = await database;
+
+    await db.delete("local_hyms", where: "local_hyms.name=$fileName");
+  }
 }
 
 // Create a hym and add it to the hym table.
