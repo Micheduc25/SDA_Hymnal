@@ -6,11 +6,14 @@ import 'package:sda_hymnal/provider/profileProvider.dart';
 import 'package:sda_hymnal/screens/SignUp/signUpScreen.dart';
 import 'package:sda_hymnal/screens/homeScreen.dart';
 import 'package:sda_hymnal/screens/profile/profileScreen.dart';
+import 'package:sda_hymnal/utils/preferences/preferences.dart';
 
 class VerifyEmail extends StatefulWidget {
-  VerifyEmail({this.userName, this.email});
+  VerifyEmail({this.userName, this.email, this.mode = "create", this.settings});
   final String userName;
   final String email;
+  final String mode;
+  final MyAppSettings settings;
   @override
   _VerifyEmailState createState() => _VerifyEmailState();
 }
@@ -18,12 +21,26 @@ class VerifyEmail extends StatefulWidget {
 class _VerifyEmailState extends State<VerifyEmail> {
   FirebaseAuth _auth;
   bool _loading;
+  bool _verified;
 
   @override
   void initState() {
     super.initState();
     _auth = FirebaseAuth.instance;
     _loading = false;
+    _verified = false;
+  }
+
+  @override
+  void dispose() async {
+    if (!_verified) {
+      FirebaseUser user = await _auth.currentUser();
+      await user.delete();
+      widget.settings.hasAccount.setValue(false);
+      widget.settings.email.setValue("");
+      widget.settings.password.setValue("");
+    }
+    super.dispose();
   }
 
   @override
@@ -73,8 +90,14 @@ class _VerifyEmailState extends State<VerifyEmail> {
                           userId = user.uid;
 
                           if (user.isEmailVerified) {
+                            setState(() {
+                              _verified = true;
+                            });
                             await AuthProvider.instance().saveUser(
-                                widget.userName, widget.email, userId);
+                                widget.userName, widget.email, userId,
+                                mode: widget.mode == "update"
+                                    ? "update"
+                                    : "create");
 
                             setState(() {
                               _loading = false;
@@ -82,9 +105,16 @@ class _VerifyEmailState extends State<VerifyEmail> {
 
                             Navigator.of(context).push(MaterialPageRoute(
                                 builder: (context) => StreamProvider.value(
+                                      catchError: (context, Object err) {
+                                        print(
+                                            "an error occured in stream provider");
+                                      },
                                       value: ProfileProvider.instance()
                                           .streamUserProfile(userId),
-                                      child: ProfileScreen(userId: userId),
+                                      child: ProfileScreen(
+                                        userId: userId,
+                                        settings: widget.settings,
+                                      ),
                                     )));
                           } else {
                             setState(() {

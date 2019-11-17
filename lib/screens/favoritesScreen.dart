@@ -3,6 +3,8 @@ import 'package:sda_hymnal/components/appDrawer.dart';
 import 'package:sda_hymnal/db/dbConnection.dart';
 import 'package:sda_hymnal/screens/hymScreen.dart';
 import 'package:sda_hymnal/utils/helperFunctions.dart';
+import 'package:sda_hymnal/utils/preferences/preferences.dart';
+import 'package:streaming_shared_preferences/streaming_shared_preferences.dart';
 
 class FavoriteScreen extends StatefulWidget {
   @override
@@ -15,12 +17,18 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
   bool _loading;
   List<Map<String, dynamic>> favHyms;
   List<int> favHymNumbers;
+  StreamingSharedPreferences _prefs;
 
   @override
   void initState() {
     super.initState();
     deleteEnable = false;
     _loading = false;
+    StreamingSharedPreferences.instance.then((prefs) {
+      setState(() {
+        _prefs = prefs;
+      });
+    });
 
     DBConnect().getFavorites().then((numbers) {
       favHymNumbers = numbers;
@@ -47,7 +55,11 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                   title: TextStyle(color: Colors.white, fontSize: 20)))),
       title: 'Favorite Screen',
       home: Scaffold(
-        drawer: Drawer(child: MyDrawer()),
+        drawer: Drawer(
+          child: _prefs != null
+              ? MyDrawer(settings: MyAppSettings(_prefs))
+              : Drawer(),
+        ),
         appBar: AppBar(
           title: Row(
             mainAxisSize: MainAxisSize.min,

@@ -173,7 +173,7 @@ class _MusicBarState extends State<MusicBar> {
         color: _playState == AudioPlayerState.PLAYING
             ? Colors.blueAccent
             : Colors.white,
-        onClick: () {
+        onClick: () async {
           if (_playState == AudioPlayerState.PAUSED) {
             _audioPlayer.resume().then((int val) {
               if (val == 1) {
@@ -192,22 +192,43 @@ class _MusicBarState extends State<MusicBar> {
                   : null;
 
               if (_songMode == SongMode.remote) {
-                _audioPlayer
-                    .play(songUrl, position: playPosition)
-                    .then((int val) {
-                  if (val == 1) {
+                try {
+                  await _audioPlayer
+                      .play(songUrl, position: playPosition)
+                      .then((int val) {
+                    if (val == 1) {
+                      setState(() {
+                        _playState = AudioPlayerState.PLAYING;
+                        print("state is playing");
+                      });
+                    }
+                  }).catchError((Object err) {
+                    showMyDialogue(
+                        "Unable to Play Song",
+                        '''Sorry we were not able to play this song,please check your internet connection''',
+                        context,
+                        positive: false);
+                    return err;
+                  }).timeout(Duration(minutes: 2), onTimeout: () {
+                    showMyDialogue(
+                        "Timeout",
+                        '''Sorry your internet connection is not the best, please verify your connection and try again''',
+                        context,
+                        positive: false);
                     setState(() {
-                      _playState = AudioPlayerState.PLAYING;
+                      _playState = AudioPlayerState.STOPPED;
+                      print("stopped play due to timeout");
                     });
+                  });
+                } catch (e) {
+                  if (e is PlatformException) {
+                    showMyDialogue(
+                        "Unable to Play Song",
+                        '''Sorry we were not able to play this song,please check your internet connection''',
+                        context,
+                        positive: false);
                   }
-                }).catchError((Object err) {
-                  showMyDialogue(
-                      "Unable to Play Song",
-                      '''Sorry we were not able to play this song,please check your internet connection is good''',
-                      context,
-                      positive: false);
-                  return err;
-                });
+                }
               } else {
                 _audioPlayer
                     .play(_localSongPath, isLocal: true, position: playPosition)
@@ -289,7 +310,7 @@ class _MusicBarState extends State<MusicBar> {
 
                   File songFile =
                       new File('$path/hym_${widget.hymNumber.toString()}.mp3');
-                  print(songFile.path);
+                  // print(songFile.path);
 
                   try {
                     //download happens here
@@ -298,41 +319,69 @@ class _MusicBarState extends State<MusicBar> {
                         .catchError((Object err) {
                       print("error getting download url");
                       return err;
+                    }).timeout(Duration(minutes: 1), onTimeout: () {
+                      setState(() {
+                        _downloading = false;
+                        showMyDialogue(
+                            "Timeout",
+                            "The connection has timed out. Please check your internet connection and try again",
+                            context,
+                            positive: false);
+                      });
                     });
 
-                    final bytes = await readBytes(
-                        downloadUrl); //we get the bytes of the file  from the download url
+                    if (_downloading) {
+                      final bytes = await readBytes(downloadUrl)
+                          .timeout(Duration(minutes: 1), onTimeout: () {
+                        setState(() {
+                          _downloading = false;
+                          showMyDialogue(
+                              "Timeout",
+                              "The connection has timed out. Please check your internet connection and try again",
+                              context,
+                              positive: false);
+                        });
+                        return;
+                      }); //we get the bytes of the file  from the download url
 
-                    await songFile.writeAsBytes(
-                        bytes); //we write these bytes into the file we created
+                      if (_downloading) {
+                        await songFile.writeAsBytes(bytes);
+                      }
+                    } //we write these bytes into the file we created
                   } catch (e) {
                     showMyDialogue(
                         "Download Error",
                         "An error occured during downloading try again please",
                         context,
                         positive: false);
+
+                    setState(() {
+                      _downloading = false;
+                    });
                   }
 
                   //check if created file exists in our local storage
-                  if (await songFile.exists()) {
-                    await DBConnect()
-                        .addLocalFile("hym_${widget.hymNumber.toString()}.mp3");
-                    showMyDialogue(
-                        "Download Successful",
-                        "The download was successful, now you can play the hym locally",
-                        context);
-                    setState(() {
-                      _musicDownloaded = true;
-                      _songMode = SongMode.local;
-                      _localSongPath = songFile.path;
-                      _downloading = false;
-                    });
-                  } else {
-                    showMyDialogue(
-                        "Download Error",
-                        "An error occured during downloading try again please",
-                        context,
-                        positive: false);
+                  if (_downloading) {
+                    if (await songFile.exists()) {
+                      await DBConnect().addLocalFile(
+                          "hym_${widget.hymNumber.toString()}.mp3");
+                      showMyDialogue(
+                          "Download Successful",
+                          "The download was successful, now you can play the hym locally",
+                          context);
+                      setState(() {
+                        _musicDownloaded = true;
+                        _songMode = SongMode.local;
+                        _localSongPath = songFile.path;
+                        _downloading = false;
+                      });
+                    } else {
+                      showMyDialogue(
+                          "Download Error",
+                          "An error occured during downloading try again please",
+                          context,
+                          positive: false);
+                    }
                   }
                 },
               ),
@@ -376,6 +425,9 @@ class _MusicBarState extends State<MusicBar> {
       setState(() {
         _playState = state;
       });
+    }).onError((Object err) {
+      print("error with player state subscription");
+      return err;
     });
   }
 

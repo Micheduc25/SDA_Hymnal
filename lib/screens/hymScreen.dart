@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:sda_hymnal/components/appDrawer.dart';
 import 'package:sda_hymnal/components/musicBar.dart';
 import 'package:sda_hymnal/db/dbConnection.dart';
+import 'package:sda_hymnal/utils/preferences/preferences.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:streaming_shared_preferences/streaming_shared_preferences.dart';
 
 class HymScreen extends StatefulWidget {
   final String title;
@@ -21,6 +23,7 @@ class _HymScreenState extends State<HymScreen> {
   double globalFontRatio;
   // Color favColor;
   bool isAFavorite;
+  StreamingSharedPreferences _prefs;
 
   @override
   void initState() {
@@ -29,10 +32,14 @@ class _HymScreenState extends State<HymScreen> {
     _loading = false;
     globalFontRatio = 1;
     isAFavorite = false;
+    StreamingSharedPreferences.instance.then((prefs) {
+      _prefs = prefs;
+      setState(() {});
+    });
 
 //since isFAvorite is async it will be executed after initState
     isFavorite(widget.number).then((value) {
-      print("favorite is $value");
+      // print("favorite is $value");
 
       setState(() {
         isAFavorite = value;
@@ -80,7 +87,9 @@ class _HymScreenState extends State<HymScreen> {
       title: 'Hym Screen',
       home: Scaffold(
         drawer: Drawer(
-          child: MyDrawer(),
+          child: _prefs != null
+              ? MyDrawer(settings: MyAppSettings(_prefs))
+              : Drawer(),
         ),
         appBar: AppBar(
           title: Text(widget.title),

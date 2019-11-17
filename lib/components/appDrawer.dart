@@ -1,11 +1,36 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:sda_hymnal/provider/_authProvider.dart';
+import 'package:sda_hymnal/provider/profileProvider.dart';
 import 'package:sda_hymnal/screens/Login/login.dart';
 import 'package:sda_hymnal/screens/SignUp/signUpScreen.dart';
 import 'package:sda_hymnal/screens/favoritesScreen.dart';
 import 'package:sda_hymnal/screens/homeScreen.dart';
+import 'package:sda_hymnal/screens/profile/profileScreen.dart';
 import 'package:sda_hymnal/screens/wordSearch.dart';
+import 'package:sda_hymnal/utils/preferences/preferences.dart';
+import 'package:streaming_shared_preferences/streaming_shared_preferences.dart';
 
-class MyDrawer extends StatelessWidget {
+class MyDrawer extends StatefulWidget {
+  final MyAppSettings settings;
+  MyDrawer({this.settings});
+  @override
+  _MyDrawerState createState() => _MyDrawerState();
+}
+
+class _MyDrawerState extends State<MyDrawer> {
+  StreamingSharedPreferences _prefs;
+  FirebaseAuth _auth;
+  @override
+  void initState() {
+    super.initState();
+    StreamingSharedPreferences.instance.then((prefs) {
+      _prefs = prefs;
+    });
+    _auth = FirebaseAuth.instance;
+  }
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -97,9 +122,49 @@ class MyDrawer extends StatelessWidget {
               ),
               title: Text("Your Profile",
                   style: TextStyle(color: Colors.white, fontSize: 20)),
-              onTap: () {
-                Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => LoginScreen()));
+              onTap: () async {
+                if (widget.settings.email.getValue() != "" &&
+                    widget.settings.password.getValue() != "") {
+                  String result = await AuthProvider.instance().loginUser(
+                      widget.settings.email.getValue(),
+                      widget.settings.password.getValue());
+                  if (result == "user not found") {
+                    widget.settings.email.setValue("");
+                    widget.settings.password.setValue("");
+                    widget.settings.hasAccount.setValue(false);
+                    print("user not found");
+                  } else {
+                    FirebaseUser user = await _auth.currentUser();
+                    final String uid = user.uid;
+
+                    Navigator.of(context).push(MaterialPageRoute(
+                      builder: (context) => StreamProvider.value(
+                          catchError: (context, Object err) {
+                            print("an error occured in stream provider");
+                          },
+                          value:
+                              ProfileProvider.instance().streamUserProfile(uid),
+                          child: ProfileScreen(
+                            userId: uid,
+                            settings: widget.settings,
+                          )),
+                    ));
+                  }
+                } else {
+                  if (widget.settings.hasAccount.getValue()) {
+                    _prefs != null
+                        ? Navigator.of(context).push(MaterialPageRoute(
+                            builder: (context) =>
+                                LoginScreen(settings: MyAppSettings(_prefs))))
+                        : print("");
+                  } else {
+                    _prefs != null
+                        ? Navigator.of(context).push(MaterialPageRoute(
+                            builder: (context) =>
+                                SignUpScreen(MyAppSettings(_prefs))))
+                        : print("");
+                  }
+                }
               },
             ),
             Divider(

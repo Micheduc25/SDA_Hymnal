@@ -3,6 +3,8 @@ import 'package:sda_hymnal/components/appDrawer.dart';
 import 'package:sda_hymnal/db/dbConnection.dart';
 import 'package:sda_hymnal/screens/hymScreen.dart';
 import 'package:sda_hymnal/utils/helperFunctions.dart';
+import 'package:sda_hymnal/utils/preferences/preferences.dart';
+import 'package:streaming_shared_preferences/streaming_shared_preferences.dart';
 
 class SearchScreen extends StatefulWidget {
   @override
@@ -13,10 +15,15 @@ class _SearchScreenState extends State<SearchScreen> {
   TextEditingController searchTextController;
   bool _loading;
   List<Map<String, dynamic>> hyms;
+  StreamingSharedPreferences _prefs;
 
   @override
   void initState() {
     super.initState();
+    StreamingSharedPreferences.instance.then((prefs) {
+      _prefs = prefs;
+      setState(() {});
+    });
 
     searchTextController = TextEditingController();
     _loading = false;
@@ -45,7 +52,9 @@ class _SearchScreenState extends State<SearchScreen> {
           automaticallyImplyLeading: true,
         ),
         drawer: Drawer(
-          child: MyDrawer(),
+          child: _prefs != null
+              ? MyDrawer(settings: MyAppSettings(_prefs))
+              : Drawer(),
         ),
         body: SingleChildScrollView(
           child: Container(

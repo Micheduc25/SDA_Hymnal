@@ -2,9 +2,30 @@ import 'package:flutter/material.dart';
 import 'package:sda_hymnal/components/appDrawer.dart';
 import 'package:sda_hymnal/provider/_authProvider.dart';
 import 'package:sda_hymnal/screens/SignUp/confirmEmail.dart';
+import 'package:sda_hymnal/utils/preferences/preferences.dart';
 import 'package:sda_hymnal/utils/validator.dart';
+import 'package:streaming_shared_preferences/streaming_shared_preferences.dart';
 
-class SignUpScreen extends StatelessWidget {
+class SignUpScreen extends StatefulWidget {
+  SignUpScreen(this.settings);
+  final MyAppSettings settings;
+
+  @override
+  _SignUpScreenState createState() => _SignUpScreenState();
+}
+
+class _SignUpScreenState extends State<SignUpScreen> {
+  StreamingSharedPreferences _prefs;
+
+  @override
+  void initState() {
+    StreamingSharedPreferences.instance.then((prefs) {
+      _prefs = prefs;
+      setState(() {});
+    });
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -21,11 +42,13 @@ class SignUpScreen extends StatelessWidget {
           centerTitle: true,
         ),
         drawer: Drawer(
-          child: MyDrawer(),
+          child: _prefs != null
+              ? MyDrawer(settings: MyAppSettings(_prefs))
+              : Drawer(),
         ),
         body: Container(
           padding: EdgeInsets.all(10),
-          child: SingleChildScrollView(child: SignUpForm()),
+          child: SingleChildScrollView(child: SignUpForm(this.widget.settings)),
         ),
       ),
     );
@@ -33,6 +56,8 @@ class SignUpScreen extends StatelessWidget {
 }
 
 class SignUpForm extends StatefulWidget {
+  SignUpForm(this.settings);
+  final MyAppSettings settings;
   _SignUpFormState createState() => _SignUpFormState();
 }
 
@@ -46,6 +71,7 @@ class _SignUpFormState extends State<SignUpForm> {
   bool _hidePass1;
   bool _hidePass2;
   bool _loading;
+  bool _rememberMe;
 
   @override
   void initState() {
@@ -59,6 +85,7 @@ class _SignUpFormState extends State<SignUpForm> {
     _hidePass1 = true;
     _hidePass2 = true;
     _loading = false;
+    _rememberMe = false;
   }
 
   @override
@@ -171,6 +198,29 @@ class _SignUpFormState extends State<SignUpForm> {
               SizedBox(
                 height: 20,
               ),
+              Container(
+                padding: EdgeInsets.symmetric(vertical: 5),
+                alignment: Alignment.center,
+                width: double.infinity,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Checkbox(
+                      activeColor: Colors.green,
+                      value: _rememberMe,
+                      onChanged: (value) {
+                        setState(() {
+                          _rememberMe = !_rememberMe;
+                        });
+                      },
+                    ),
+                    Text(
+                      "Remember Me ",
+                      style: TextStyle(color: Colors.green),
+                    )
+                  ],
+                ),
+              ),
               Padding(
                 padding: EdgeInsets.only(top: 20),
                 child: !_loading
@@ -181,11 +231,13 @@ class _SignUpFormState extends State<SignUpForm> {
                           "Sign Up",
                           style: TextStyle(color: Colors.white, fontSize: 18),
                         ),
-                        onPressed: () => _validateForm(context),
+                        onPressed: () =>
+                            _validateForm(context, widget.settings),
                         color: Colors.green,
                       )
                     : CircularProgressIndicator(
                         backgroundColor: Colors.green,
+                        strokeWidth: 4,
                       ),
               )
             ],
@@ -218,7 +270,7 @@ class _SignUpFormState extends State<SignUpForm> {
         });
   }
 
-  _validateForm(BuildContext context) async {
+  _validateForm(BuildContext context, MyAppSettings settings) async {
     if (_passwordController.text != _confirmPasswordController.text) {
       showMyDialogue("Passwords Mismatch",
           "Sorry the two passwords entered do not match", context,
@@ -242,19 +294,27 @@ class _SignUpFormState extends State<SignUpForm> {
               "Invalid Email", "Sorry the email you used is not valid", context,
               positive: false);
         } else if (status == "email sent") {
+          if (_rememberMe) {
+            var val = await settings.email.setValue(_emailController.text);
+            // if (val) print("successfully stored email");
+
+            val = await settings.password.setValue(_passwordController.text);
+            // if (val) print("Successfuly stored password");
+          }
+          bool val = await settings.hasAccount.setValue(true);
+          // if (val) print("hasAccount set to true");
+
           Navigator.of(context).push(MaterialPageRoute(
               builder: (context) => VerifyEmail(
-                  email: _emailController.text,
-                  userName: _nameController.text)));
+                    email: _emailController.text,
+                    userName: _nameController.text,
+                    settings: widget.settings,
+                  )));
         }
 
         setState(() {
           _loading = false;
         });
-
-        //  await AuthProvider.instance()
-        //     .saveUser(_nameController.text, _emailController.text);
-
       } else {
         setState(() {
           _autoValidate = true;

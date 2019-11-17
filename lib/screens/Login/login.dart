@@ -4,10 +4,31 @@ import 'package:sda_hymnal/components/appDrawer.dart';
 import 'package:sda_hymnal/provider/_authProvider.dart';
 import 'package:sda_hymnal/provider/profileProvider.dart';
 import 'package:sda_hymnal/screens/SignUp/confirmEmail.dart';
+import 'package:sda_hymnal/screens/homeScreen.dart';
 import 'package:sda_hymnal/screens/profile/profileScreen.dart';
+import 'package:sda_hymnal/utils/preferences/preferences.dart';
 import 'package:sda_hymnal/utils/validator.dart';
+import 'package:streaming_shared_preferences/streaming_shared_preferences.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
+  LoginScreen({this.settings});
+  final MyAppSettings settings;
+  @override
+  _LoginScreenState createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  StreamingSharedPreferences _prefs;
+
+  @override
+  void initState() {
+    StreamingSharedPreferences.instance.then((prefs) {
+      _prefs = prefs;
+      setState(() {});
+    });
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -24,11 +45,13 @@ class LoginScreen extends StatelessWidget {
           centerTitle: true,
         ),
         drawer: Drawer(
-          child: MyDrawer(),
+          child: _prefs != null
+              ? MyDrawer(settings: MyAppSettings(_prefs))
+              : Drawer(),
         ),
         body: Container(
           padding: EdgeInsets.all(10),
-          child: SingleChildScrollView(child: LoginForm()),
+          child: SingleChildScrollView(child: LoginForm(widget.settings)),
         ),
       ),
     );
@@ -36,6 +59,8 @@ class LoginScreen extends StatelessWidget {
 }
 
 class LoginForm extends StatefulWidget {
+  LoginForm(this.settings);
+  final MyAppSettings settings;
   _LoginFormState createState() => _LoginFormState();
 }
 
@@ -48,6 +73,7 @@ class _LoginFormState extends State<LoginForm> {
   bool _hidePass1;
 
   bool _loading;
+  bool _rememberMe;
 
   @override
   void initState() {
@@ -58,6 +84,7 @@ class _LoginFormState extends State<LoginForm> {
     _autoValidate = false;
     _hidePass1 = true;
     _loading = false;
+    _rememberMe = false;
   }
 
   @override
@@ -133,6 +160,29 @@ class _LoginFormState extends State<LoginForm> {
               SizedBox(
                 height: 20,
               ),
+              Container(
+                padding: EdgeInsets.symmetric(vertical: 5),
+                alignment: Alignment.center,
+                width: double.infinity,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Checkbox(
+                      activeColor: Colors.green,
+                      value: _rememberMe,
+                      onChanged: (value) {
+                        setState(() {
+                          _rememberMe = !_rememberMe;
+                        });
+                      },
+                    ),
+                    Text(
+                      "Remember Me ",
+                      style: TextStyle(color: Colors.green),
+                    )
+                  ],
+                ),
+              ),
               Padding(
                 padding: EdgeInsets.only(top: 20),
                 child: !_loading
@@ -143,7 +193,8 @@ class _LoginFormState extends State<LoginForm> {
                           "LogIn",
                           style: TextStyle(color: Colors.white, fontSize: 18),
                         ),
-                        onPressed: () => _validateForm(context),
+                        onPressed: () =>
+                            _validateForm(context, widget.settings),
                         color: Colors.green,
                       )
                     : CircularProgressIndicator(
@@ -180,14 +231,22 @@ class _LoginFormState extends State<LoginForm> {
         });
   }
 
-  _validateForm(BuildContext context) async {
+  _validateForm(BuildContext context, MyAppSettings settings) async {
     if (_formKey.currentState.validate()) {
       setState(() {
         _loading = true;
       });
 
       String result = await AuthProvider.instance()
-          .loginUser(_emailController.text, _passwordController.text);
+          .loginUser(_emailController.text, _passwordController.text)
+          .timeout(Duration(minutes: 1), onTimeout: () {
+        showMyDialogue(
+            "Request Timed Out",
+            "Sorry the request timed out, please verify your connection and try again",
+            context,
+            positive: false);
+        return;
+      });
 
       setState(() {
         _loading = false;
@@ -205,11 +264,23 @@ class _LoginFormState extends State<LoginForm> {
         showMyDialogue("User not found",
             "Sorry the user with this email address was not found", context,
             positive: false);
+        await settings.hasAccount.setValue(false);
+        print("has account set false");
+        Navigator.of(context)
+            .push(MaterialPageRoute(builder: (context) => HomeScreen()));
       } else {
+        if (_rememberMe) {
+          await settings.email.setValue(_emailController.text);
+          await settings.password.setValue(_passwordController.text);
+          // await settings.hasAccount.setValue(true);
+        }
         Navigator.of(context).push(MaterialPageRoute(
             builder: (context) => StreamProvider.value(
                   value: ProfileProvider.instance().streamUserProfile(result),
-                  child: ProfileScreen(userId: result),
+                  child: ProfileScreen(
+                    userId: result,
+                    settings: widget.settings,
+                  ),
                   catchError: (context, obj) {
                     print("an error occured while providing ${obj.toString()}");
                     return;

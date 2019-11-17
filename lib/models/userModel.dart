@@ -11,7 +11,8 @@ class UserModel {
   factory UserModel.fromFirestore(DocumentSnapshot snapshot) {
     return UserModel(
         email: snapshot.data[Config.email],
-        userName: snapshot.data[Config.userName],
-        profilePicUrl: snapshot.data[Config.profilePicUrl] ?? "");
+        userName: snapshot.data[Config.userName] ?? "",
+        profilePicUrl: snapshot.data[Config.profilePicUrl] ??
+            "https://www.fourjay.org/myphoto/f/14/143147_avatar-png.jpg");
   }
 }

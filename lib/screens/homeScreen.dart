@@ -7,9 +7,27 @@ import 'package:sda_hymnal/screens/categorySearch.dart';
 import 'package:sda_hymnal/screens/favoritesScreen.dart';
 import 'package:sda_hymnal/screens/hymScreen.dart';
 import 'package:sda_hymnal/screens/wordSearch.dart';
+import 'package:sda_hymnal/utils/preferences/preferences.dart';
+import 'package:streaming_shared_preferences/streaming_shared_preferences.dart';
 
+class HomeScreen extends StatefulWidget {
+  @override
+  _HomeScreenState createState() => _HomeScreenState();
+}
 
-class HomeScreen extends StatelessWidget {
+class _HomeScreenState extends State<HomeScreen> {
+  StreamingSharedPreferences _prefs;
+
+  @override
+  void initState() {
+    StreamingSharedPreferences.instance.then((prefs) {
+      setState(() {
+        _prefs = prefs;
+      });
+    });
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -22,7 +40,9 @@ class HomeScreen extends StatelessWidget {
       title: 'homepage',
       home: Scaffold(
         drawer: Drawer(
-          child: MyDrawer(),
+          child: _prefs != null
+              ? MyDrawer(settings: MyAppSettings(_prefs))
+              : Drawer(),
         ),
         appBar: AppBar(
           centerTitle: true,
@@ -209,7 +229,8 @@ class _HomeScreenBodyState extends State<HomeScreenBody> {
                               image: "theme.png",
                               onClick: () {
                                 Navigator.of(context).push(MaterialPageRoute(
-                                  builder: (context) => CategorySearchScreen()));
+                                    builder: (context) =>
+                                        CategorySearchScreen()));
                               },
                             )),
                       ],

@@ -1,8 +1,9 @@
-
 import 'package:flutter/material.dart';
 import 'package:sda_hymnal/components/appDrawer.dart';
 import 'package:sda_hymnal/screens/hymScreen.dart';
 import 'package:sda_hymnal/utils/helperFunctions.dart';
+import 'package:sda_hymnal/utils/preferences/preferences.dart';
+import 'package:streaming_shared_preferences/streaming_shared_preferences.dart';
 
 class AlphabeticSearchScreen extends StatefulWidget {
   @override
@@ -14,11 +15,18 @@ class _AlphabeticSearchScreenState extends State<AlphabeticSearchScreen> {
   Map<String, List<Widget>> allEntries;
   List<String> allKeys;
   bool _loading;
+  StreamingSharedPreferences _prefs;
 
   @override
   void initState() {
     super.initState();
     _loading = true;
+
+    StreamingSharedPreferences.instance.then((prefs) {
+      setState(() {
+        _prefs = prefs;
+      });
+    });
 
     HelperFunctions.getAllHymsByFirstLetters().then((hymsList) {
       setState(() {
@@ -46,25 +54,30 @@ class _AlphabeticSearchScreenState extends State<AlphabeticSearchScreen> {
           centerTitle: true,
           automaticallyImplyLeading: true,
         ),
-        drawer: Drawer(child: MyDrawer()),
+        drawer: Drawer(
+          child: _prefs != null
+              ? MyDrawer(settings: MyAppSettings(_prefs))
+              : Drawer(),
+        ),
         body: Stack(
           children: <Widget>[
             !_loading
                 ? ListView.builder(
                     itemCount: allEntries.length,
-                    itemBuilder: (BuildContext context, int index) =>
-                        Column(
+                    itemBuilder: (BuildContext context, int index) => Column(
                           children: <Widget>[
                             ExpansionTile(
                               leading: Icon(Icons.queue_music),
                               title: Text(
                                 allKeys[index].toUpperCase(),
-                                style: TextStyle(fontSize: 20,fontWeight: FontWeight.bold),
+                                style: TextStyle(
+                                    fontSize: 20, fontWeight: FontWeight.bold),
                               ),
                               children: allEntries[allKeys[index]],
                             ),
-
-                            Divider(color: Colors.grey,)
+                            Divider(
+                              color: Colors.grey,
+                            )
                           ],
                         ))
                 : Container(),
