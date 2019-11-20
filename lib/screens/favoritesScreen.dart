@@ -105,7 +105,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                         padding: EdgeInsets.symmetric(horizontal: 10),
                         child: favHymNumbers != null && favHymNumbers.length > 0
                             ? ListView.builder(
-                                itemCount: favHyms.length,
+                                itemCount: favHyms != null ? favHyms.length : 0,
                                 itemBuilder: (context, index) {
                                   return Column(
                                     children: <Widget>[

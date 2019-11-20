@@ -198,7 +198,8 @@ class _LoginFormState extends State<LoginForm> {
                         color: Colors.green,
                       )
                     : CircularProgressIndicator(
-                        backgroundColor: Colors.green,
+                        backgroundColor: Colors.blue,
+                        strokeWidth: 7,
                       ),
               )
             ],
@@ -237,9 +238,54 @@ class _LoginFormState extends State<LoginForm> {
         _loading = true;
       });
 
-      String result = await AuthProvider.instance()
+      // String result =
+      await AuthProvider.instance()
           .loginUser(_emailController.text, _passwordController.text)
-          .timeout(Duration(minutes: 1), onTimeout: () {
+          .then((result) async {
+        setState(() {
+          _loading = false;
+        });
+
+        if (result == "invalid email") {
+          showMyDialogue("Invalid Email",
+              "Sorry the email you entered is not valid try again", context,
+              positive: false);
+        } else if (result == "wrong password") {
+          showMyDialogue("Wrong Password",
+              "Sorry the password you entered is incorrect", context,
+              positive: false);
+        } else if (result == "user not found") {
+          showMyDialogue("User not found",
+              "Sorry the user with this email address was not found", context,
+              positive: false);
+          // await settings.hasAccount.setValue(false);
+          print("has account set false");
+          Navigator.of(context)
+              .push(MaterialPageRoute(builder: (context) => HomeScreen()));
+        } else {
+          if (_rememberMe) {
+            await settings.email.setValue(_emailController.text);
+            await settings.password.setValue(_passwordController.text);
+            // await settings.hasAccount.setValue(true);
+          }
+          Navigator.of(context).push(MaterialPageRoute(
+              builder: (context) => StreamProvider.value(
+                    value: ProfileProvider.instance().streamUserProfile(result),
+                    child: ProfileScreen(
+                      userId: result,
+                      settings: widget.settings,
+                    ),
+                    catchError: (context, obj) {
+                      print(
+                          "an error occured while providing ${obj.toString()}");
+                      return;
+                    },
+                  )));
+        }
+      }).timeout(Duration(minutes: 1), onTimeout: () {
+        setState(() {
+          _loading = false;
+        });
         showMyDialogue(
             "Request Timed Out",
             "Sorry the request timed out, please verify your connection and try again",
@@ -247,46 +293,6 @@ class _LoginFormState extends State<LoginForm> {
             positive: false);
         return;
       });
-
-      setState(() {
-        _loading = false;
-      });
-
-      if (result == "invalid email") {
-        showMyDialogue("Invalid Email",
-            "Sorry the email you entered is not valid try again", context,
-            positive: false);
-      } else if (result == "wrong password") {
-        showMyDialogue("Wrong Password",
-            "Sorry the password you entered is incorrect", context,
-            positive: false);
-      } else if (result == "user not found") {
-        showMyDialogue("User not found",
-            "Sorry the user with this email address was not found", context,
-            positive: false);
-        await settings.hasAccount.setValue(false);
-        print("has account set false");
-        Navigator.of(context)
-            .push(MaterialPageRoute(builder: (context) => HomeScreen()));
-      } else {
-        if (_rememberMe) {
-          await settings.email.setValue(_emailController.text);
-          await settings.password.setValue(_passwordController.text);
-          // await settings.hasAccount.setValue(true);
-        }
-        Navigator.of(context).push(MaterialPageRoute(
-            builder: (context) => StreamProvider.value(
-                  value: ProfileProvider.instance().streamUserProfile(result),
-                  child: ProfileScreen(
-                    userId: result,
-                    settings: widget.settings,
-                  ),
-                  catchError: (context, obj) {
-                    print("an error occured while providing ${obj.toString()}");
-                    return;
-                  },
-                )));
-      }
     } else {
       setState(() {
         _autoValidate = true;

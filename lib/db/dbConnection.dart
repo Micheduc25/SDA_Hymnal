@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:path/path.dart';
 import 'package:sda_hymnal/models/favorite_model.dart';
 import 'package:sda_hymnal/models/hym.dart';
-import 'package:sda_hymnal/models/hymVerses.dart';
 import 'package:sqflite/sqflite.dart';
 
 class DBConnect {

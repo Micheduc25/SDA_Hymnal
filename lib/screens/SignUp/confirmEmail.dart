@@ -33,13 +33,6 @@ class _VerifyEmailState extends State<VerifyEmail> {
 
   @override
   void dispose() async {
-    if (!_verified) {
-      FirebaseUser user = await _auth.currentUser();
-      await user.delete();
-      widget.settings.hasAccount.setValue(false);
-      widget.settings.email.setValue("");
-      widget.settings.password.setValue("");
-    }
     super.dispose();
   }
 
@@ -93,6 +86,9 @@ class _VerifyEmailState extends State<VerifyEmail> {
                             setState(() {
                               _verified = true;
                             });
+
+                            await widget.settings.isEmailVerified
+                                .setValue(true);
                             await AuthProvider.instance().saveUser(
                                 widget.userName, widget.email, userId,
                                 mode: widget.mode == "update"
@@ -130,7 +126,28 @@ class _VerifyEmailState extends State<VerifyEmail> {
                       )
                     : CircularProgressIndicator(
                         backgroundColor: Colors.green,
-                      )
+                      ),
+                SizedBox(
+                  height: 20,
+                ),
+                InkWell(
+                    child: Text(
+                      "Resend Verification",
+                      style: TextStyle(
+                          color: Colors.blueAccent,
+                          decoration: TextDecoration.underline),
+                    ),
+                    onTap: () async {
+                      String result =
+                          await AuthProvider.instance().resendVerification();
+
+                      if (result == "email sent") {
+                        showMyDialogue(
+                            "Verification Link Sent",
+                            "The verification link was successfully sent please verify your email",
+                            context);
+                      }
+                    })
               ],
             ),
           ),

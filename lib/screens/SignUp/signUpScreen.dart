@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sda_hymnal/components/appDrawer.dart';
 import 'package:sda_hymnal/provider/_authProvider.dart';
+import 'package:sda_hymnal/screens/Login/login.dart';
 import 'package:sda_hymnal/screens/SignUp/confirmEmail.dart';
 import 'package:sda_hymnal/utils/preferences/preferences.dart';
 import 'package:sda_hymnal/utils/validator.dart';
@@ -40,6 +41,25 @@ class _SignUpScreenState extends State<SignUpScreen> {
         appBar: AppBar(
           title: Text("Create an Account"),
           centerTitle: true,
+          actions: <Widget>[
+            PopupMenuButton(
+              icon: Icon(Icons.more_vert),
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: "login",
+                  child: Text("Login"),
+                )
+              ],
+              onSelected: (value) {
+                if (value == "login") {
+                  Navigator.of(context).push(MaterialPageRoute(
+                      builder: (context) => LoginScreen(
+                            settings: widget.settings,
+                          )));
+                }
+              },
+            )
+          ],
         ),
         drawer: Drawer(
           child: _prefs != null
@@ -236,8 +256,8 @@ class _SignUpFormState extends State<SignUpForm> {
                         color: Colors.green,
                       )
                     : CircularProgressIndicator(
-                        backgroundColor: Colors.green,
-                        strokeWidth: 4,
+                        backgroundColor: Colors.blueAccent,
+                        strokeWidth: 7,
                       ),
               )
             ],
@@ -295,13 +315,17 @@ class _SignUpFormState extends State<SignUpForm> {
               positive: false);
         } else if (status == "email sent") {
           if (_rememberMe) {
-            var val = await settings.email.setValue(_emailController.text);
+            await settings.email.setValue(_emailController.text);
             // if (val) print("successfully stored email");
 
-            val = await settings.password.setValue(_passwordController.text);
+            await settings.password.setValue(_passwordController.text);
             // if (val) print("Successfuly stored password");
+
           }
-          bool val = await settings.hasAccount.setValue(true);
+          await settings.userName.setValue(_nameController.text);
+          await settings.updateMode.setValue("create");
+          await settings.hasAccount.setValue(true);
+
           // if (val) print("hasAccount set to true");
 
           Navigator.of(context).push(MaterialPageRoute(

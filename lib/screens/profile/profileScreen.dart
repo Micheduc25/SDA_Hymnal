@@ -37,6 +37,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _emailVerified;
   FirebaseUser currUser;
   StreamingSharedPreferences _prefs;
+  bool _loading;
+  GlobalKey<ScaffoldState> _scaffoldKey;
 
   StorageReference ref;
 
@@ -52,6 +54,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _emailVerified = false;
     _auth = FirebaseAuth.instance;
     _loggedIn = true;
+    _loading = false;
+    _scaffoldKey = GlobalKey();
 
     _authState = _auth.onAuthStateChanged.listen((user) {
       if (user == null) {
@@ -83,6 +87,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   @override
+  void dispose() {
+    _authState.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     var userdata = Provider.of<UserModel>(context);
     return MaterialApp(
@@ -94,74 +104,124 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   title: TextStyle(color: Colors.white, fontSize: 20)))),
       title: "Profile Screen",
       home: Scaffold(
+        key: _scaffoldKey,
         appBar: AppBar(
           title: Text("Profile"),
           centerTitle: true,
           actions: <Widget>[
-            PopupMenuButton(
-              itemBuilder: (context) {
-                return [
-                  PopupMenuItem(
-                    value: "logOut",
+            PopupMenuButton(itemBuilder: (context) {
+              return [
+                PopupMenuItem(
+                  value: "logOut",
+                  child: ListTile(
+                    leading: Icon(
+                      Icons.exit_to_app,
+                      color: Colors.blueAccent,
+                    ),
+                    title: Text("Log Out"),
+                  ),
+                ),
+                PopupMenuItem(
+                    value: "delete",
                     child: ListTile(
                       leading: Icon(
-                        Icons.exit_to_app,
-                        color: Colors.blueAccent,
+                        Icons.delete_forever,
+                        color: Colors.red,
                       ),
-                      title: Text("Log Out"),
-                    ),
-                  ),
-                  PopupMenuItem(
-                      value: "delete",
-                      child: ListTile(
-                        leading: Icon(
-                          Icons.delete_forever,
-                          color: Colors.red,
-                        ),
-                        title: Text("Delete Account"),
-                      ))
-                ];
-              },
-              onSelected: (String value) async {
-                if (value == "delete") {
-                  String result = await AuthProvider.instance().deleteUser();
-                  if (result == "delete success") {
-                    widget.settings.hasAccount.setValue(false);
-                    print("successfully deleted account");
-                    Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(builder: (context) => HomeScreen()));
-                  } else if (result == "login timeout") {
-                    if (widget.settings.email.getValue() != "" &&
-                        widget.settings.password.getValue() != "") {
-                      await AuthProvider.instance().loginUser(
-                          widget.settings.email.getValue(),
-                          widget.settings.password.getValue());
+                      title: Text("Delete Account"),
+                    ))
+              ];
+            }, onSelected: (String value) async {
+              if (value == "delete") {
+                // String result =
+                showDialog(
+                    context: context,
+                    builder: (context) {
+                      return AlertDialog(
+                        title: Text("Delete Account?"),
+                        content: Text(
+                            "Are you really sure you want to delete your account?"),
+                        actions: <Widget>[
+                          FlatButton(
+                              child: Text("No"),
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              }),
+                          FlatButton(
+                              child: Text("Yes"),
+                              onPressed: () async {
+                                Navigator.of(context).pop(); //close the dialog
 
-                      FirebaseUser user = await _auth.currentUser();
-                      final String uid = user.uid;
+                                setState(() {
+                                  _loading = true; //start progressindicator
+                                });
 
-                      Navigator.of(context).push(MaterialPageRoute(
-                          builder: (context) => ProfileScreen(userId: uid)));
-                    } else {
-                      Navigator.of(context).pushReplacement(MaterialPageRoute(
-                          builder: (context) =>
-                              LoginScreen(settings: widget.settings)));
-                    }
-                  } else {
-                    showMyDialogue(
-                        "Error Deleting Account",
-                        "Sorry we encountered an error deleting the account",
-                        context,
-                        positive: false);
-                  }
-                } else if (value == 'logOut') {
-                  await widget.settings.email.setValue("");
-                  await widget.settings.password.setValue("");
-                  Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (context) => HomeScreen()));
-                }
-              },
-            )
+                                await AuthProvider
+                                        .instance() //try to delete account
+                                    .deleteUser()
+                                    .then((result) async {
+                                  if (result == "delete success") {
+                                    await widget.settings.email.setValue("");
+                                    await widget.settings.password.setValue("");
+                                    await widget.settings.hasAccount
+                                        .setValue(false);
+
+                                    setState(() {
+                                      _loading = false;
+                                    });
+
+                                    print("successfully deleted account");
+
+                                    Navigator.of(_scaffoldKey.currentContext)
+                                        .pushReplacement(MaterialPageRoute(
+                                            builder: (context) =>
+                                                HomeScreen()));
+                                  } else if (result == "login timeout") {
+                                    if (widget.settings.email.getValue() !=
+                                            "" &&
+                                        widget.settings.password.getValue() !=
+                                            "") {
+                                      await AuthProvider.instance().loginUser(
+                                          widget.settings.email.getValue(),
+                                          widget.settings.password.getValue());
+
+                                      FirebaseUser user =
+                                          await _auth.currentUser();
+                                      final String uid = user.uid;
+
+                                      Navigator.of(_scaffoldKey.currentContext)
+                                          .push(MaterialPageRoute(
+                                              builder: (context) =>
+                                                  ProfileScreen(userId: uid)));
+                                    } else {
+                                      Navigator.of(context).pushReplacement(
+                                          MaterialPageRoute(
+                                              builder: (context) => LoginScreen(
+                                                  settings: widget.settings)));
+                                    }
+                                  } else {
+                                    setState(() {
+                                      _loading = false;
+                                    });
+                                    showMyDialogue(
+                                        "Error Deleting Account",
+                                        "Sorry we encountered an error deleting the account",
+                                        context,
+                                        positive: false);
+                                  }
+                                });
+                              })
+                        ],
+                      );
+                    });
+              } else if (value == 'logOut') {
+                await widget.settings.email.setValue("");
+                await widget.settings.password.setValue("");
+                await _auth.signOut();
+                Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(builder: (context) => HomeScreen()));
+              }
+            })
           ],
         ),
         drawer: Drawer(
@@ -255,21 +315,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                             StorageUploadTask uploadTask =
                                 ref.putFile(_imageFile);
-                            await uploadTask.onComplete;
+                            await uploadTask.onComplete.then((uploadTask) {
+                              ref.getDownloadURL().then((url) {
+                                _imageUrl = url.toString();
 
-                            ref.getDownloadURL().then((url) {
-                              _imageUrl = url.toString();
-
-                              _firestore
-                                  .collection("users")
-                                  .document("${widget.userId}")
-                                  .updateData({
-                                Config.profilePicUrl: _imageUrl
-                              }).then((_) {
-                                setState(() {
-                                  _imageLoading = false;
+                                _firestore
+                                    .collection("users")
+                                    .document("${widget.userId}")
+                                    .updateData({
+                                  Config.profilePicUrl: _imageUrl
+                                }).then((_) {
+                                  setState(() {
+                                    _imageLoading = false;
+                                  });
                                 });
                               });
+                            }).timeout(Duration(minutes: 1), onTimeout: () {
+                              showMyDialogue(
+                                  "Could not Upload Image",
+                                  "Sorry we were unable to upload your profile image, please check your internet connection and try again",
+                                  context,
+                                  positive: false);
+                              setState(() {
+                                _imageLoading = false;
+                              });
+                              return;
                             });
                           }
                         },
@@ -362,6 +432,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         },
                       ),
                     )
+                  : Container(),
+              _loading
+                  ? Center(
+                      child: SizedBox(
+                      width: 40,
+                      height: 40,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 7,
+                        backgroundColor: Colors.white,
+                      ),
+                    ))
                   : Container()
             ],
           ),
@@ -455,13 +536,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     context,
                                     positive: false);
                               });
+
+                              await widget.settings.userName
+                                  .setValue(myController.text);
+
                               Navigator.of(context).pop();
                             } else {
                               String status = await AuthProvider.instance()
                                   .editEmail(myController.text);
 
                               if (status == "email sent") {
-                                settings.email.setValue(myController.text);
+                                if (settings.email.getValue() != "" ||
+                                    settings.password.getValue() != "") {
+                                  settings.email.setValue(myController.text);
+                                }
+                                settings.updateMode.setValue("update");
                                 Navigator.of(context)
                                     .pushReplacement(MaterialPageRoute(
                                         builder: (context) => VerifyEmail(

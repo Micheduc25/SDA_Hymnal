@@ -56,8 +56,19 @@ class AuthProvider {
   }
 
   Future<String> resetPassword(String email) async {
-    await _auth.sendPasswordResetEmail(email: email);
-    return "email sent";
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+      return "email sent";
+    } catch (err) {
+      if (err is PlatformException) {
+        if (err.code == "ERROR_INVALID_EMAIL") {
+          return "invalid email";
+        } else if (err.code == "ERROR_USER_NOT_FOUND") {
+          return "user not found";
+        }
+      }
+    }
+    return null;
   }
 
   Future<void> saveUser(String userName, String email, String uid,
@@ -124,9 +135,23 @@ class AuthProvider {
     String userId = user.uid;
 
     try {
-      await user.delete();
-      await _firestore.collection("users").document(userId).delete();
-      await _storage.child(userId).delete();
+      await _firestore
+          .collection("users")
+          .document(userId)
+          .delete()
+          .catchError((Object err) {
+        print("error on firestore");
+      });
+
+      try {
+        await _storage.child(userId).child("profilePic").delete();
+      } catch (e) {
+        print("file not found");
+      } finally {
+        await user.delete();
+        print("success deleting");
+      }
+
       return "delete success";
     } catch (e) {
       if (e is PlatformException) {
@@ -135,6 +160,17 @@ class AuthProvider {
         }
       }
       return "delete error";
+    }
+  }
+
+  Future<String> resendVerification() async {
+    FirebaseUser user = await _auth.currentUser();
+
+    try {
+      await user.sendEmailVerification();
+      return "email sent";
+    } catch (err) {
+      return "email not sent";
     }
   }
 }

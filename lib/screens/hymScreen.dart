@@ -1,7 +1,13 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:sda_hymnal/components/appDrawer.dart';
 import 'package:sda_hymnal/components/musicBar.dart';
+import 'package:sda_hymnal/components/notificationDialog.dart';
 import 'package:sda_hymnal/db/dbConnection.dart';
+import 'package:sda_hymnal/screens/HymComments/hymComments.dart';
+import 'package:sda_hymnal/screens/HymComments/streamHymComments.dart';
+import 'package:sda_hymnal/screens/homeScreen.dart';
 import 'package:sda_hymnal/utils/preferences/preferences.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:streaming_shared_preferences/streaming_shared_preferences.dart';
@@ -21,6 +27,7 @@ class _HymScreenState extends State<HymScreen> {
   TextEditingController numberController;
   bool _loading;
   double globalFontRatio;
+  FirebaseAuth _auth;
   // Color favColor;
   bool isAFavorite;
   StreamingSharedPreferences _prefs;
@@ -32,6 +39,7 @@ class _HymScreenState extends State<HymScreen> {
     _loading = false;
     globalFontRatio = 1;
     isAFavorite = false;
+    _auth = FirebaseAuth.instance;
     StreamingSharedPreferences.instance.then((prefs) {
       _prefs = prefs;
       setState(() {});
@@ -92,9 +100,50 @@ class _HymScreenState extends State<HymScreen> {
               : Drawer(),
         ),
         appBar: AppBar(
-          title: Text(widget.title),
+          title: Text("Hym " + widget.number.toString()),
           centerTitle: true,
           automaticallyImplyLeading: true,
+          actions: <Widget>[
+            FlatButton(
+              child: Row(
+                children: <Widget>[
+                  Icon(
+                    Icons.comment,
+                    color: Colors.white,
+                  ),
+                  SizedBox(
+                    width: 5,
+                  ),
+                  Text(
+                    "Comments",
+                    style: TextStyle(color: Colors.white),
+                  )
+                ],
+              ),
+              onPressed: () async {
+                FirebaseUser currentUser = await _auth.currentUser();
+
+                if (currentUser != null) {
+                  Navigator.of(context).push(MaterialPageRoute(
+                      builder: (context) => StreamProvider.value(
+                            value: StreamHymComments.instance()
+                                .streamHymComments(widget.number),
+                            catchError: (context, err) {
+                              print("an error occured $err");
+                            },
+                            child: HymComments(
+                              hymNumber: widget.number,
+                            ),
+                          ))); //change this to the comments screen for this particular hym
+                  print(currentUser.uid.toString());
+                } else {
+                  NotificationDialog.showMyDialogue(
+                      "Login", "Please login and try again", context,
+                      positive: false);
+                }
+              },
+            )
+          ],
         ),
         body: SingleChildScrollView(
           child: Container(
