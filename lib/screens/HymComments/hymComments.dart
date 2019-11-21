@@ -164,14 +164,8 @@ class _HymCommentsState extends State<HymComments> {
                                   child: Container(
                                     margin: EdgeInsets.only(
                                         bottom: 20,
-                                        left: allComments[index].sender ==
-                                                currUser.uid
-                                            ? 0
-                                            : 10,
-                                        right: allComments[index].sender ==
-                                                currUser.uid
-                                            ? 10
-                                            : 0,
+                                        left: 10,
+                                        right: 10,
                                         top: 10),
                                     padding: EdgeInsets.all(10),
                                     decoration: BoxDecoration(
@@ -183,17 +177,28 @@ class _HymCommentsState extends State<HymComments> {
                                           allComments[index].sender),
                                     ),
                                     child: Column(
+                                      crossAxisAlignment:
+                                          allComments[index].sender ==
+                                                  currUser.uid
+                                              ? CrossAxisAlignment.end
+                                              : CrossAxisAlignment.start,
                                       children: <Widget>[
                                         Padding(
                                           padding: EdgeInsets.only(
                                               bottom: 10, top: 5),
                                           child: Text(
                                             allComments[index].content,
-                                            style:
-                                                TextStyle(color: Colors.white),
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 17),
                                           ),
                                         ),
-                                        Text(_timeAgo(allComments[index].date))
+                                        Text(
+                                          _timeAgo(allComments[index].date),
+                                          style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12),
+                                        )
                                       ],
                                     ),
                                   ));
@@ -267,19 +272,21 @@ class _HymCommentsState extends State<HymComments> {
                                 ),
                                 onTap: () async {
                                   //send comment
-                                  await _firestore
-                                      .collection("comments")
-                                      .document(
-                                          "hym_${widget.hymNumber}_comments")
-                                      .collection("comments")
-                                      .add({
-                                    Config.content: commentController.text,
-                                    Config.sender: currUser.uid,
-                                    Config.likes: 0,
-                                    Config.date: DateTime.now()
-                                  });
+                                  if (commentController.text != "") {
+                                    await _firestore
+                                        .collection("comments")
+                                        .document(
+                                            "hym_${widget.hymNumber}_comments")
+                                        .collection("comments")
+                                        .add({
+                                      Config.content: commentController.text,
+                                      Config.sender: currUser.uid,
+                                      Config.likes: 0,
+                                      Config.date: DateTime.now()
+                                    });
 
-                                  commentController.clear();
+                                    commentController.clear();
+                                  }
                                 },
                               )
                             ],
@@ -317,20 +324,20 @@ class _HymCommentsState extends State<HymComments> {
 
     int minutes = diff.inMinutes;
 
-    if (minutes == 0.0) {
-      return 'now';
-    } else if (minutes > 0.1 && minutes < 1) {
-      return "some seconds ago";
+    if (minutes == 0) {
+      return 'some seconds ago';
     } else if (minutes < 60) {
-      if (minutes == 1) return '1 minute ago';
       return "${minutes.toString()} minute${minutes > 1 ? 's' : ''} ago";
     } else if (minutes < 1440) {
-      return "${(minutes / 60).floor().toString()} hour${minutes > 60 ? 's' : ''} ago";
+      return "${(minutes / 60).floor().toString()} hour${minutes > (60 * 2) - 1 ? 's' : ''} ago";
     } else if (minutes < 10080) {
-      return "${(minutes / (60 * 24 * 7)).floor().toString()} day${minutes > 1440 ? 's' : ''} ago";
+      return "${(minutes / (60 * 24 * 7)).floor().toString()} day${minutes > (1440 * 2) - 1 ? 's' : ''} ago";
+    } else if (minutes < 40320) {
+      return "${(minutes / (60 * 24 * 7 * 4)).floor().toString()} week${minutes > (10080 * 2) - 1 ? 's' : ""}";
+    } else if (minutes < 524160) {
+      return "${(DateTime.now().month - convertedPostTime.month).toString()} month${minutes > (40320 * 2) - 1 ? 's' : ""}";
     } else {
-      //continue this tomorrow
-      return null;
+      return "${(DateTime.now().year - convertedPostTime.year).toString()} year${minutes > (524160 * 2) - 1 ? 's' : ""}";
     }
   }
 }
