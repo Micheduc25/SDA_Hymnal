@@ -4,7 +4,7 @@ import 'package:sda_hymnal/utils/config.dart';
 class CommentModel {
   const CommentModel({this.date, this.likes, this.content, this.sender});
 
-  final String date;
+  final Timestamp date;
   final String content;
   final int likes;
   final String sender;

@@ -20,4 +20,14 @@ class StreamHymComments {
           .toList();
     });
   }
+
+  Stream<OnlineHym> streamHymModel(int hymNumber) {
+    return firestore
+        .collection("hyms")
+        .document("hym_${hymNumber.toString()}")
+        .snapshots()
+        .map((snapshot) {
+      return OnlineHym.fromFirestore(snapshot);
+    });
+  }
 }

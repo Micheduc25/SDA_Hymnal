@@ -203,9 +203,12 @@ class _HomeScreenBodyState extends State<HomeScreenBody> {
                           child: Choice(
                             image: "a_z.png",
                             onClick: () {
-                              Navigator.of(context).push(MaterialPageRoute(
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
                                   builder: (context) =>
-                                      AlphabeticSearchScreen()));
+                                      AlphabeticSearchScreen())
+                                      
+                                      );
                             },
                           ),
                         ),

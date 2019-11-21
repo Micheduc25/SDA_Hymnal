@@ -125,12 +125,23 @@ class _HymScreenState extends State<HymScreen> {
 
                 if (currentUser != null) {
                   Navigator.of(context).push(MaterialPageRoute(
-                      builder: (context) => StreamProvider.value(
-                            value: StreamHymComments.instance()
-                                .streamHymComments(widget.number),
-                            catchError: (context, err) {
-                              print("an error occured $err");
-                            },
+                      builder: (context) => MultiProvider(
+                            providers: [
+                              StreamProvider.value(
+                                value: StreamHymComments.instance()
+                                    .streamHymComments(widget.number),
+                                catchError: (context, err) {
+                                  print("an error occured $err");
+                                },
+                              ),
+                              StreamProvider.value(
+                                value: StreamHymComments.instance()
+                                    .streamHymModel(widget.number),
+                                catchError: (context, err) {
+                                  print("an error occured on hymmodel stream");
+                                },
+                              )
+                            ],
                             child: HymComments(
                               hymNumber: widget.number,
                             ),

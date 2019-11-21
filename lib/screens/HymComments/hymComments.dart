@@ -1,10 +1,14 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sda_hymnal/db/dbConnection.dart';
 import 'package:sda_hymnal/models/commentsModel.dart';
+import 'package:sda_hymnal/models/hymOnlineModel.dart';
 import 'package:sda_hymnal/utils/config.dart';
+import 'package:sda_hymnal/utils/timeStream.dart';
 
 class HymComments extends StatefulWidget {
   HymComments({this.hymNumber});
@@ -20,11 +24,23 @@ class _HymCommentsState extends State<HymComments> {
   TextEditingController commentController;
   bool _showTextInput;
   FirebaseUser currUser;
+  DateTime now;
+  StreamSubscription _nowTime;
+  DocumentReference _hymRef;
 
   @override
   void initState() {
     super.initState();
+    now = DateTime.now();
     _firestore = Firestore.instance;
+    _hymRef = _firestore
+        .collection("hyms")
+        .document("hym_${widget.hymNumber.toString()}");
+    _nowTime = TimeStream.getCurrentTime().listen((time) {
+      setState(() {
+        now = time;
+      });
+    });
     commentController = TextEditingController();
     _showTextInput = false;
     FirebaseAuth.instance.currentUser().then((user) {
@@ -37,8 +53,17 @@ class _HymCommentsState extends State<HymComments> {
   }
 
   @override
+  void dispose() {
+    commentController?.dispose();
+    _nowTime?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    List<CommentModel> allComments = Provider.of<List<CommentModel>>(context);
+    List<CommentModel> allComments =
+        Provider.of<List<CommentModel>>(context)?.reversed?.toList();
+    OnlineHym thisHym = Provider.of<OnlineHym>(context);
     return MaterialApp(
       theme: ThemeData(
           primarySwatch: Colors.green,
@@ -83,14 +108,18 @@ class _HymCommentsState extends State<HymComments> {
                                 width: 5,
                               ),
                               Text(
-                                "X likes", //replace X later
+                                thisHym != null
+                                    ? "${thisHym.likes.toString()} likes"
+                                    : "",
                                 style: TextStyle(color: Colors.white),
                               )
                             ],
                           ),
 
                           Text(
-                            "Y comments",
+                            allComments != null
+                                ? "${allComments.length.toString()} comments"
+                                : "",
                             style: TextStyle(color: Colors.white),
                           ) //replace y later
                         ],
@@ -101,9 +130,15 @@ class _HymCommentsState extends State<HymComments> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: <Widget>[
-                          NavItem(Icons.thumb_up, "Like", () {
-                            print("liked!");
-                            //implement like
+                          NavItem(Icons.thumb_up, "Like", () async {
+                            await _firestore
+                                .runTransaction((transaction) async {
+                              final snapshot = await transaction.get(_hymRef);
+
+                              await transaction.update(_hymRef, {
+                                Config.likes: snapshot.data[Config.likes] + 1
+                              });
+                            });
                           }),
                           NavItem(Icons.add_comment, "Comment", () {
                             this.setState(() {
@@ -118,19 +153,30 @@ class _HymCommentsState extends State<HymComments> {
                 Expanded(
                     child: allComments != null && currUser != null
                         ? ListView.builder(
+                            reverse: true,
                             itemCount: allComments.length,
                             itemBuilder: (context, index) {
                               return Align(
-                                  alignment: allComments[index].sender ==
-                                          currUser.email
-                                      ? Alignment.topRight
-                                      : Alignment.topLeft,
+                                  alignment:
+                                      allComments[index].sender == currUser.uid
+                                          ? Alignment.topRight
+                                          : Alignment.topLeft,
                                   child: Container(
-                                    margin: EdgeInsets.only(bottom: 20),
+                                    margin: EdgeInsets.only(
+                                        bottom: 20,
+                                        left: allComments[index].sender ==
+                                                currUser.uid
+                                            ? 0
+                                            : 10,
+                                        right: allComments[index].sender ==
+                                                currUser.uid
+                                            ? 10
+                                            : 0,
+                                        top: 10),
                                     padding: EdgeInsets.all(10),
                                     decoration: BoxDecoration(
                                       color: allComments[index].sender ==
-                                              currUser.email
+                                              currUser.uid
                                           ? Colors.green[400]
                                           : Colors.blueAccent,
                                       borderRadius: _bubbleBorder(
@@ -147,7 +193,7 @@ class _HymCommentsState extends State<HymComments> {
                                                 TextStyle(color: Colors.white),
                                           ),
                                         ),
-                                        Text("time ago here")
+                                        Text(_timeAgo(allComments[index].date))
                                       ],
                                     ),
                                   ));
@@ -172,6 +218,7 @@ class _HymCommentsState extends State<HymComments> {
                             children: <Widget>[
                               Expanded(
                                 child: TextField(
+                                  controller: commentController,
                                   minLines: 1,
                                   maxLines: 7,
                                   scrollController: null,
@@ -218,8 +265,21 @@ class _HymCommentsState extends State<HymComments> {
                                     color: Colors.green,
                                   ),
                                 ),
-                                onTap: () {
+                                onTap: () async {
                                   //send comment
+                                  await _firestore
+                                      .collection("comments")
+                                      .document(
+                                          "hym_${widget.hymNumber}_comments")
+                                      .collection("comments")
+                                      .add({
+                                    Config.content: commentController.text,
+                                    Config.sender: currUser.uid,
+                                    Config.likes: 0,
+                                    Config.date: DateTime.now()
+                                  });
+
+                                  commentController.clear();
                                 },
                               )
                             ],
@@ -236,7 +296,7 @@ class _HymCommentsState extends State<HymComments> {
   }
 
   BorderRadius _bubbleBorder(String sender) {
-    if (sender == currUser.email) {
+    if (sender == currUser.uid) {
       return BorderRadius.only(
           topLeft: Radius.circular(20),
           topRight: Radius.circular(0),
@@ -251,18 +311,26 @@ class _HymCommentsState extends State<HymComments> {
     }
   }
 
-  String _timeAgo(DateTime postTime) {
-    Duration diff = DateTime.now().difference(postTime);
+  String _timeAgo(Timestamp postTime) {
+    DateTime convertedPostTime = postTime.toDate();
+    Duration diff = now.difference(convertedPostTime);
 
     int minutes = diff.inMinutes;
-    if (minutes < 60) {
-      return "${minutes.toString()} minutes ago";
+
+    if (minutes == 0.0) {
+      return 'now';
+    } else if (minutes > 0.1 && minutes < 1) {
+      return "some seconds ago";
+    } else if (minutes < 60) {
+      if (minutes == 1) return '1 minute ago';
+      return "${minutes.toString()} minute${minutes > 1 ? 's' : ''} ago";
     } else if (minutes < 1440) {
-      return "${(minutes / 60).floor().toString()} hours ago";
+      return "${(minutes / 60).floor().toString()} hour${minutes > 60 ? 's' : ''} ago";
     } else if (minutes < 10080) {
-      return "${(minutes / (60 * 24 * 7)).floor().toString()} days ago";
+      return "${(minutes / (60 * 24 * 7)).floor().toString()} day${minutes > 1440 ? 's' : ''} ago";
     } else {
       //continue this tomorrow
+      return null;
     }
   }
 }
