@@ -189,16 +189,13 @@ class _HymCommentsState extends State<HymComments> {
                                           ? TextDirection.rtl
                                           : TextDirection.ltr,
                                   mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: <Widget>[
-                                    // CircleAvatar(
-                                    //   maxRadius: 50,
-                                    //   backgroundImage: NetworkImage(
-                                    //       _userStorageReference
-                                    //           .child(allComments[index].sender)
-                                    //           .getDownloadURL().then(onValue)
-
-                                    //           ),
-                                    // ),
+                                    CircleAvatar(
+                                      maxRadius: 26,
+                                      backgroundImage: NetworkImage(
+                                          allComments[index].commentPic),
+                                    ),
                                     Container(
                                       margin: EdgeInsets.only(
                                           bottom: 20,
@@ -340,6 +337,11 @@ class _HymCommentsState extends State<HymComments> {
                                   ),
                                   onTap: () async {
                                     //send comment
+                                    String profilePicUrl =
+                                        await _userStorageReference
+                                            .child(currUser.uid)
+                                            .child("profilePic")
+                                            .getDownloadURL();
                                     if (commentController.text != "") {
                                       await _firestore
                                           .collection("comments")
@@ -350,7 +352,8 @@ class _HymCommentsState extends State<HymComments> {
                                         Config.content: commentController.text,
                                         Config.sender: currUser.uid,
                                         Config.likes: 0,
-                                        Config.date: DateTime.now()
+                                        Config.date: DateTime.now(),
+                                        Config.commentPic: profilePicUrl
                                       });
 
                                       commentController.clear();

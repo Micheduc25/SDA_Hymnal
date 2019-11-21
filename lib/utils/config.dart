@@ -13,4 +13,5 @@ class Config {
   static String date = "date";
   static String content = "content";
   static String sender = "sender";
+  static String commentPic = "commentPic";
 }
