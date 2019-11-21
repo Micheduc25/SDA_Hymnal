@@ -70,6 +70,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   Expanded(
                     child: TextField(
                       controller: searchTextController,
+                      autofocus: true,
                       decoration: InputDecoration(
                           hintText: "Title",
                           filled: true,

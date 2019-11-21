@@ -42,4 +42,19 @@ class TimeStream {
       return 365;
     }
   }
+
+  int numberOfLeapYears(int startYear, int endYear) {
+    int count = 0;
+    for (int i = startYear; i <= endYear; i++) {
+      if (isLeapYear(i)) count++;
+    }
+    return count;
+  }
+
+  int numberOfDaysInYearInterval(int startYear, int endYear) {
+    int yearDifference = endYear - startYear;
+    int additionalDays = numberOfLeapYears(startYear, endYear);
+
+    return yearDifference * 365 + additionalDays;
+  }
 }
