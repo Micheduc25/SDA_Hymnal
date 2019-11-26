@@ -11,9 +11,11 @@ import 'package:provider/provider.dart';
 import 'package:sda_hymnal/db/dbConnection.dart';
 import 'package:sda_hymnal/models/commentsModel.dart';
 import 'package:sda_hymnal/models/hymOnlineModel.dart';
+import 'package:sda_hymnal/models/userModel.dart';
 import 'package:sda_hymnal/utils/config.dart';
 import 'package:sda_hymnal/utils/timeStream.dart';
 import 'package:flutter/services.dart';
+import 'package:share/share.dart';
 
 class HymComments extends StatefulWidget {
   HymComments({this.hymNumber});
@@ -36,6 +38,7 @@ class _HymCommentsState extends State<HymComments> {
   List<String> recommendedEmojis;
   FocusNode textInputFocus;
   StorageReference _userStorageReference;
+  bool _hymLiked;
 
   @override
   void initState() {
@@ -81,6 +84,7 @@ class _HymCommentsState extends State<HymComments> {
     List<CommentModel> allComments =
         Provider.of<List<CommentModel>>(context)?.reversed?.toList();
     OnlineHym thisHym = Provider.of<OnlineHym>(context);
+    UserModel userInfo = Provider.of<UserModel>(context);
     return MaterialApp(
       theme: ThemeData(
           primarySwatch: Colors.green,
@@ -173,71 +177,156 @@ class _HymCommentsState extends State<HymComments> {
                 ),
               ),
               Expanded(
-                  child: allComments != null && currUser != null
+                  child: allComments != null &&
+                          currUser != null &&
+                          userInfo != null
                       ? ListView.builder(
                           reverse: true,
                           itemCount: allComments.length,
                           itemBuilder: (context, index) {
                             return Align(
-                                alignment:
-                                    allComments[index].sender == currUser.uid
-                                        ? Alignment.topRight
-                                        : Alignment.topLeft,
-                                child: Row(
-                                  textDirection:
-                                      allComments[index].sender == currUser.uid
-                                          ? TextDirection.rtl
-                                          : TextDirection.ltr,
-                                  mainAxisSize: MainAxisSize.min,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: <Widget>[
-                                    CircleAvatar(
-                                      maxRadius: 26,
-                                      backgroundImage: NetworkImage(
-                                          allComments[index].commentPic),
-                                    ),
-                                    Container(
-                                      margin: EdgeInsets.only(
-                                          bottom: 20,
-                                          left: 10,
-                                          right: 10,
-                                          top: 10),
-                                      padding: EdgeInsets.all(10),
-                                      decoration: BoxDecoration(
-                                        color: allComments[index].sender ==
-                                                currUser.uid
-                                            ? Colors.green[400]
-                                            : Colors.blueAccent,
-                                        borderRadius: _bubbleBorder(
-                                            allComments[index].sender),
-                                      ),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            allComments[index].sender ==
-                                                    currUser.uid
-                                                ? CrossAxisAlignment.end
-                                                : CrossAxisAlignment.start,
-                                        children: <Widget>[
-                                          Padding(
-                                            padding: EdgeInsets.only(
-                                                bottom: 10, top: 5),
-                                            child: Text(
-                                              allComments[index].content,
-                                              style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 17),
+                                alignment: Alignment.center,
+                                child: Container(
+                                  margin: EdgeInsets.only(
+                                      bottom: 20, left: 10, right: 10, top: 10),
+                                  padding: EdgeInsets.all(15),
+                                  decoration: BoxDecoration(
+                                      color: allComments[index].sender ==
+                                              currUser.uid
+                                          ? Colors.green[400]
+                                          : Colors.blueAccent,
+                                      borderRadius: BorderRadius.circular(10)),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: <Widget>[
+                                      Padding(
+                                        padding: EdgeInsets.only(bottom: 10),
+                                        child: Row(
+                                          children: <Widget>[
+                                            CircleAvatar(
+                                              backgroundImage: NetworkImage(
+                                                  allComments[index]
+                                                      .commentPic),
+                                              maxRadius: 25,
                                             ),
+                                            SizedBox(
+                                              width: 10,
+                                            ),
+                                            Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: <Widget>[
+                                                Text(
+                                                  allComments[index].senderName,
+                                                  style: TextStyle(
+                                                      color: Colors.white,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 17),
+                                                ),
+                                                Text(
+                                                  _timeAgo(
+                                                      allComments[index].date),
+                                                  style: TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 12),
+                                                )
+                                              ],
+                                            )
+                                          ],
+                                        ),
+                                      ),
+                                      Padding(
+                                        padding: EdgeInsets.only(bottom: 10),
+                                        child: Text(
+                                          allComments[index].content,
+                                          style: TextStyle(color: Colors.white),
+                                        ),
+                                      ),
+                                      Divider(
+                                        color: Colors.white,
+                                        thickness: 1.5,
+                                      ),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: <Widget>[
+                                          InkWell(
+                                            child: Icon(
+                                              Icons.share,
+                                              color: Colors.white,
+                                            ),
+                                            onTap: () async {
+                                              //implement share
+                                              try {
+                                                await Share.share('''
+                                                  From SDA_Hymnal, hym ${widget.hymNumber.toString()}\n${allComments[index].senderName},\n\n ${allComments[index].content}''');
+                                              } catch (e) {
+                                                print(
+                                                    "error occured while sharing   ${e.toString()}");
+                                              }
+                                            },
                                           ),
-                                          Text(
-                                            _timeAgo(allComments[index].date),
-                                            style: TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 12),
+                                          Row(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.end,
+                                            children: <Widget>[
+                                              InkWell(
+                                                child: Row(
+                                                  children: <Widget>[
+                                                    Text(
+                                                      "234",
+                                                      style: TextStyle(
+                                                          color: Colors.white),
+                                                    ),
+                                                    SizedBox(
+                                                      width: 5,
+                                                    ),
+                                                    Icon(
+                                                      Icons.comment,
+                                                      color: Colors.white,
+                                                    )
+                                                  ],
+                                                ),
+                                                onTap: () {
+                                                  //go to comments for this comment
+                                                },
+                                              ),
+                                              SizedBox(
+                                                width: 40,
+                                              ),
+                                              InkWell(
+                                                child: Row(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.end,
+                                                  children: <Widget>[
+                                                    Text(
+                                                      allComments[index]
+                                                          .likes
+                                                          .toString(),
+                                                      style: TextStyle(
+                                                          color: Colors.white),
+                                                    ),
+                                                    SizedBox(
+                                                      width: 5,
+                                                    ),
+                                                    Icon(
+                                                      Icons.thumb_up,
+                                                      color: Colors.white,
+                                                    )
+                                                  ],
+                                                ),
+                                                onTap: () {
+                                                  //go to people who liked
+                                                },
+                                              )
+                                            ],
                                           )
                                         ],
-                                      ),
-                                    ),
-                                  ],
+                                      )
+                                    ],
+                                  ),
                                 ));
                           },
                         )
@@ -337,6 +426,7 @@ class _HymCommentsState extends State<HymComments> {
                                   ),
                                   onTap: () async {
                                     //send comment
+
                                     String profilePicUrl =
                                         await _userStorageReference
                                             .child(currUser.uid)
@@ -353,7 +443,8 @@ class _HymCommentsState extends State<HymComments> {
                                         Config.sender: currUser.uid,
                                         Config.likes: 0,
                                         Config.date: DateTime.now(),
-                                        Config.commentPic: profilePicUrl
+                                        Config.commentPic: profilePicUrl,
+                                        Config.senderName: userInfo.userName
                                       });
 
                                       commentController.clear();

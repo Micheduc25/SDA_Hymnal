@@ -14,4 +14,5 @@ class Config {
   static String content = "content";
   static String sender = "sender";
   static String commentPic = "commentPic";
+  static String senderName = "senderName";
 }

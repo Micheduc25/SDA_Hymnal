@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -5,6 +6,7 @@ import 'package:sda_hymnal/components/appDrawer.dart';
 import 'package:sda_hymnal/components/musicBar.dart';
 import 'package:sda_hymnal/components/notificationDialog.dart';
 import 'package:sda_hymnal/db/dbConnection.dart';
+import 'package:sda_hymnal/provider/profileProvider.dart';
 import 'package:sda_hymnal/screens/HymComments/hymComments.dart';
 import 'package:sda_hymnal/screens/HymComments/streamHymComments.dart';
 import 'package:sda_hymnal/screens/homeScreen.dart';
@@ -31,6 +33,7 @@ class _HymScreenState extends State<HymScreen> {
   // Color favColor;
   bool isAFavorite;
   StreamingSharedPreferences _prefs;
+  Firestore _firestore;
 
   @override
   void initState() {
@@ -40,6 +43,7 @@ class _HymScreenState extends State<HymScreen> {
     globalFontRatio = 1;
     isAFavorite = false;
     _auth = FirebaseAuth.instance;
+    _firestore = Firestore.instance;
     StreamingSharedPreferences.instance.then((prefs) {
       _prefs = prefs;
       setState(() {});
@@ -139,6 +143,13 @@ class _HymScreenState extends State<HymScreen> {
                                     .streamHymModel(widget.number),
                                 catchError: (context, err) {
                                   print("an error occured on hymmodel stream");
+                                },
+                              ),
+                              StreamProvider.value(
+                                value: ProfileProvider.instance()
+                                    .streamUserProfile(currentUser.uid),
+                                catchError: (context, err) {
+                                  print("an error occured on usermodel stream");
                                 },
                               )
                             ],
