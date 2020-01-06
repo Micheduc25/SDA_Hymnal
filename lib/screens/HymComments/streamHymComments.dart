@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sda_hymnal/models/commentsModel.dart';
 import 'package:sda_hymnal/models/hymOnlineModel.dart';
+import 'package:sda_hymnal/models/replyModel.dart';
 import 'package:sda_hymnal/screens/HymComments/hymComments.dart';
 
 class StreamHymComments {
@@ -17,6 +18,22 @@ class StreamHymComments {
         .map((snapshot) {
       return snapshot.documents
           .map((docSnapshot) => CommentModel.fromFirestore(docSnapshot))
+          .toList();
+    });
+  }
+
+  Stream<List<ReplyModel>> streamCommentReplies(
+      int hymNumber, String commentId) {
+    return firestore
+        .collection("comments")
+        .document("hym_${hymNumber.toString()}_comments")
+        .collection("replies")
+        .document(commentId)
+        .collection("replies")
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.documents
+          .map((docSnapshot) => ReplyModel.fromFirestore(docSnapshot))
           .toList();
     });
   }

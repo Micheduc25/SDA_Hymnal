@@ -6,12 +6,16 @@ import 'package:emoji_picker/emoji_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:sda_hymnal/db/dbConnection.dart';
 import 'package:sda_hymnal/models/commentsModel.dart';
 import 'package:sda_hymnal/models/hymOnlineModel.dart';
 import 'package:sda_hymnal/models/userModel.dart';
+import 'package:sda_hymnal/provider/profileProvider.dart';
+import 'package:sda_hymnal/screens/HymComments/commentReplies.dart';
+import 'package:sda_hymnal/screens/HymComments/streamHymComments.dart';
 import 'package:sda_hymnal/utils/config.dart';
 import 'package:sda_hymnal/utils/timeStream.dart';
 import 'package:flutter/services.dart';
@@ -39,6 +43,7 @@ class _HymCommentsState extends State<HymComments> {
   FocusNode textInputFocus;
   StorageReference _userStorageReference;
   bool _hymLiked;
+  bool sent;
 
   @override
   void initState() {
@@ -46,6 +51,7 @@ class _HymCommentsState extends State<HymComments> {
     _showEmojiPicker = false;
     now = DateTime.now();
     textInputFocus = FocusNode();
+    sent = true;
 
     recommendedEmojis = [];
     _firestore = Firestore.instance;
@@ -153,15 +159,78 @@ class _HymCommentsState extends State<HymComments> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: <Widget>[
-                        NavItem(Icons.thumb_up, "Like", () async {
-                          await _firestore.runTransaction((transaction) async {
-                            final snapshot = await transaction.get(_hymRef);
+                        NavItem(
+                          Icons.thumb_up,
+                          "Like" + (_hymLiked == true ? "ed" : ""),
+                          () async {
+                            if (!thisHym.likers.contains(currUser.uid)) {
+                              try {
+                                await _firestore
+                                    .runTransaction((transaction) async {
+                                  final snapshot =
+                                      await transaction.get(_hymRef);
 
-                            await transaction.update(_hymRef, {
-                              Config.likes: snapshot.data[Config.likes] + 1
-                            });
-                          });
-                        }),
+                                  await transaction.update(_hymRef, {
+                                    Config.likes:
+                                        snapshot.data[Config.likes] + 1
+                                  });
+                                });
+
+                                List<String> tempLikers = thisHym.likers;
+                                tempLikers.add(currUser.uid);
+
+                                await _firestore
+                                    .collection("hyms")
+                                    .document(
+                                        "hym_${widget.hymNumber.toString()}")
+                                    .updateData({Config.likers: tempLikers});
+                                setState(() {
+                                  _hymLiked = true;
+                                });
+                              } catch (e) {
+                                if (e is PlatformException) {
+                                  print("transaction timeout");
+                                }
+                              }
+                            } else {
+                              try {
+                                await _firestore
+                                    .runTransaction((transaction) async {
+                                  final snapshot =
+                                      await transaction.get(_hymRef);
+
+                                  try {
+                                    await transaction.update(_hymRef, {
+                                      Config.likes:
+                                          snapshot.data[Config.likes] - 1
+                                    });
+                                  } catch (e) {
+                                    if (e is PlatformException) {
+                                      print("transaction occured already");
+                                    }
+                                  }
+                                });
+                                List<String> tempLikers = thisHym.likers;
+                                tempLikers.remove(currUser.uid);
+
+                                await _firestore
+                                    .collection("hyms")
+                                    .document(
+                                        "hym_${widget.hymNumber.toString()}")
+                                    .updateData({Config.likers: tempLikers});
+
+                                setState(() {
+                                  _hymLiked = false;
+                                });
+                              } catch (e) {
+                                if (e is PlatformException) {
+                                  print("transaction timeout");
+                                }
+                              }
+                            }
+                          },
+                          color: _hymLiked == true ? Colors.pink : Colors.white,
+                        ),
                         NavItem(Icons.add_comment, "Comment", () {
                           this.setState(() {
                             _showTextInput = !_showTextInput;
@@ -184,6 +253,36 @@ class _HymCommentsState extends State<HymComments> {
                           reverse: true,
                           itemCount: allComments.length,
                           itemBuilder: (context, index) {
+                            int numberOfComments = 0;
+                            _firestore
+                                .collection("comments")
+                                .document(
+                                    "hym_${widget.hymNumber.toString()}_comments")
+                                .collection("replies")
+                                .document(allComments[index].commentId)
+                                .collection("replies")
+                                .snapshots()
+                                .length
+                                .then((length) {
+                                  numberOfComments = length;
+                                print(numberOfComments);
+                                setState(() {
+                                
+                            });
+                              });
+                              
+                            // String senderName = "";
+
+                            // _firestore
+                            //     .collection("users")
+                            //     .document(allComments[index].sender)
+                            //     .get()
+                            //     .then((doc) {
+                            //   setState(() {
+                            //     senderName = doc.data[Config.userName];
+                            //   });
+                            // });
+
                             return Align(
                                 alignment: Alignment.center,
                                 child: Container(
@@ -261,7 +360,9 @@ class _HymCommentsState extends State<HymComments> {
                                               //implement share
                                               try {
                                                 await Share.share('''
-                                                  From SDA_Hymnal, hym ${widget.hymNumber.toString()}\n${allComments[index].senderName},\n\n ${allComments[index].content}''');
+                                                  From SDA_Hymnal, hym ${widget.hymNumber.toString()}\n${allComments[index].senderName},\n\n ${allComments[index].content}''',
+                                                    subject:
+                                                        "SDA Hym App Comment");
                                               } catch (e) {
                                                 print(
                                                     "error occured while sharing   ${e.toString()}");
@@ -276,7 +377,7 @@ class _HymCommentsState extends State<HymComments> {
                                                 child: Row(
                                                   children: <Widget>[
                                                     Text(
-                                                      "234",
+                                                      "${numberOfComments.toString()}",
                                                       style: TextStyle(
                                                           color: Colors.white),
                                                     ),
@@ -290,37 +391,191 @@ class _HymCommentsState extends State<HymComments> {
                                                   ],
                                                 ),
                                                 onTap: () {
-                                                  //go to comments for this comment
+                                                  Navigator.of(context)
+                                                      .push(MaterialPageRoute(
+                                                          builder:
+                                                              (context) =>
+                                                                  MultiProvider(
+                                                                    providers: [
+                                                                      StreamProvider
+                                                                          .value(
+                                                                        value: StreamHymComments.instance().streamCommentReplies(
+                                                                            widget.hymNumber,
+                                                                            allComments[index].commentId),
+                                                                        catchError:
+                                                                            (context,
+                                                                                err) {
+                                                                          print(
+                                                                              "error occured in streaming comment replies");
+                                                                        },
+                                                                      ),
+                                                                      StreamProvider
+                                                                          .value(
+                                                                        value: StreamHymComments.instance()
+                                                                            .streamHymModel(widget.hymNumber),
+                                                                      ),
+                                                                      StreamProvider
+                                                                          .value(
+                                                                        value: StreamHymComments.instance()
+                                                                            .streamHymComments(widget.hymNumber),
+                                                                      ),
+                                                                      StreamProvider
+                                                                          .value(
+                                                                        value: ProfileProvider.instance()
+                                                                            .streamUserProfile(allComments[index].sender),
+                                                                      )
+                                                                    ],
+                                                                    child: CommentReplies(
+                                                                        commentId:
+                                                                            allComments[index].commentId),
+                                                                  )));
                                                 },
                                               ),
                                               SizedBox(
                                                 width: 40,
                                               ),
                                               InkWell(
-                                                child: Row(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.end,
-                                                  children: <Widget>[
-                                                    Text(
-                                                      allComments[index]
-                                                          .likes
-                                                          .toString(),
-                                                      style: TextStyle(
-                                                          color: Colors.white),
-                                                    ),
-                                                    SizedBox(
-                                                      width: 5,
-                                                    ),
-                                                    Icon(
-                                                      Icons.thumb_up,
-                                                      color: Colors.white,
-                                                    )
-                                                  ],
-                                                ),
-                                                onTap: () {
-                                                  //go to people who liked
-                                                },
-                                              )
+                                                  child: Row(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment.end,
+                                                    children: <Widget>[
+                                                      Text(
+                                                        allComments[index]
+                                                            .likes
+                                                            .toString(),
+                                                        style: TextStyle(
+                                                            color:
+                                                                Colors.white),
+                                                      ),
+                                                      SizedBox(
+                                                        width: 5,
+                                                      ),
+                                                      Icon(
+                                                        Icons.thumb_up,
+                                                        color: Colors.white,
+                                                      )
+                                                    ],
+                                                  ),
+                                                  onTap: () async {
+                                                    DocumentReference
+                                                        commentRef = _firestore
+                                                            .collection(
+                                                                "comments")
+                                                            .document(
+                                                                "hym_${thisHym.number.toString()}_comments")
+                                                            .collection(
+                                                                "comments")
+                                                            .document(
+                                                                allComments[
+                                                                        index]
+                                                                    .commentId);
+                                                    if (!allComments[index]
+                                                        .likers
+                                                        .contains(
+                                                            currUser.uid)) {
+                                                      try {
+                                                        await _firestore
+                                                            .runTransaction(
+                                                                (transaction) async {
+                                                          final snapshot =
+                                                              await transaction
+                                                                  .get(
+                                                                      commentRef);
+
+                                                          await transaction
+                                                              .update(
+                                                                  commentRef, {
+                                                            Config
+                                                                .likes: snapshot
+                                                                        .data[
+                                                                    Config
+                                                                        .likes] +
+                                                                1
+                                                          });
+                                                        });
+
+                                                        List<String>
+                                                            tempLikers =
+                                                            allComments[index]
+                                                                .likers;
+                                                        tempLikers
+                                                            .add(currUser.uid);
+
+                                                        await _firestore
+                                                            .collection(
+                                                                "comments")
+                                                            .document(
+                                                                "hym_${widget.hymNumber.toString()}_comments")
+                                                            .collection(
+                                                                "comments")
+                                                            .document(
+                                                                allComments[
+                                                                        index]
+                                                                    .commentId)
+                                                            .updateData({
+                                                          Config.likers:
+                                                              tempLikers
+                                                        });
+                                                      } catch (e) {
+                                                        if (e
+                                                            is PlatformException) {
+                                                          print(
+                                                              "platform exception at transaction");
+                                                        }
+                                                      }
+                                                    } else {
+                                                      try {
+                                                        await _firestore
+                                                            .runTransaction(
+                                                                (transaction) async {
+                                                          final snapshot =
+                                                              await transaction
+                                                                  .get(
+                                                                      commentRef);
+
+                                                          await transaction
+                                                              .update(
+                                                                  commentRef, {
+                                                            Config
+                                                                .likes: snapshot
+                                                                        .data[
+                                                                    Config
+                                                                        .likes] -
+                                                                1
+                                                          });
+                                                        });
+
+                                                        List<String>
+                                                            tempLikers =
+                                                            allComments[index]
+                                                                .likers;
+                                                        tempLikers.remove(
+                                                            currUser.uid);
+
+                                                        await _firestore
+                                                            .collection(
+                                                                "comments")
+                                                            .document(
+                                                                "hym_${widget.hymNumber.toString()}_comments")
+                                                            .collection(
+                                                                "comments")
+                                                            .document(
+                                                                allComments[
+                                                                        index]
+                                                                    .commentId)
+                                                            .updateData({
+                                                          Config.likers:
+                                                              tempLikers
+                                                        });
+                                                      } catch (e) {
+                                                        if (e
+                                                            is PlatformException) {
+                                                          print(
+                                                              "platform exception at transaction");
+                                                        }
+                                                      }
+                                                    }
+                                                  })
                                             ],
                                           )
                                         ],
@@ -375,101 +630,71 @@ class _HymCommentsState extends State<HymComments> {
                                       contentPadding: EdgeInsets.symmetric(
                                           vertical: 12, horizontal: 10),
                                       // prefixIcon: InkWell(
-                                      //   child: Icon(!_showEmojiPicker
-                                      //       ? Icons.face
-                                      //       : Icons.keyboard),
-                                      //   onTap: () {
-                                      //     //switch to emojis
-
-                                      //     setState(() {
-                                      //       _showEmojiPicker =
-                                      //           !_showEmojiPicker;
-                                      //     });
-                                      //   },
-                                      // ),
-                                      // suffixIcon: InkWell(
-                                      //   child: Icon(Icons.photo_camera),
-                                      //   onTap: () async {
-                                      //     //add image
-
-                                      //     File postImageFile =
-                                      //         await ImagePicker.pickImage(
-                                      //             source: ImageSource.gallery,
-                                      //             imageQuality: 70);
-
-                                      //     StorageUploadTask upload =
-                                      //         _storageReference
-                                      //             .putFile(postImageFile);
-                                      //     await upload.onComplete
-                                      //         .then((snapshot) async {
-                                      //       String url = await _storageReference
-                                      //           .getDownloadURL();
-
-                                      //     });
-                                      //   },
-                                      // ),
                                     ),
                                   ),
                                 ),
-                                InkWell(
-                                  child: Container(
-                                    padding: EdgeInsets.all(10),
-                                    margin: EdgeInsets.only(left: 10),
-                                    decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius:
-                                            BorderRadius.circular(100)),
-                                    child: Icon(
-                                      Icons.send,
-                                      color: Colors.green,
-                                    ),
-                                  ),
-                                  onTap: () async {
-                                    //send comment
+                                sent
+                                    ? InkWell(
+                                        child: Container(
+                                          padding: EdgeInsets.all(10),
+                                          margin: EdgeInsets.only(left: 10),
+                                          decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius:
+                                                  BorderRadius.circular(100)),
+                                          child: Icon(
+                                            Icons.send,
+                                            color: Colors.green,
+                                          ),
+                                        ),
+                                        onTap: () async {
+                                          //send comment
+                                          setState(() {
+                                            sent = false;
+                                          });
+                                          String commentHolder =
+                                              commentController.text;
+                                          commentController.clear();
+                                          String profilePicUrl =
+                                              await _userStorageReference
+                                                  .child(currUser.uid)
+                                                  .child("profilePic")
+                                                  .getDownloadURL();
 
-                                    String profilePicUrl =
-                                        await _userStorageReference
-                                            .child(currUser.uid)
-                                            .child("profilePic")
-                                            .getDownloadURL();
-                                    if (commentController.text != "") {
-                                      await _firestore
-                                          .collection("comments")
-                                          .document(
-                                              "hym_${widget.hymNumber}_comments")
-                                          .collection("comments")
-                                          .add({
-                                        Config.content: commentController.text,
-                                        Config.sender: currUser.uid,
-                                        Config.likes: 0,
-                                        Config.date: DateTime.now(),
-                                        Config.commentPic: profilePicUrl,
-                                        Config.senderName: userInfo.userName
-                                      });
-
-                                      commentController.clear();
-                                    }
-                                  },
-                                )
+                                          if (commentHolder != "") {
+                                            await _firestore
+                                                .collection("comments")
+                                                .document(
+                                                    "hym_${widget.hymNumber}_comments")
+                                                .collection("comments")
+                                                .document(
+                                                    "comment_${allComments.length + 1}")
+                                                .setData({
+                                              Config.content: commentHolder,
+                                              Config.sender: currUser.uid,
+                                              Config.likes: 0,
+                                              Config.date: DateTime.now(),
+                                              Config.commentPic: profilePicUrl,
+                                              Config.senderName:
+                                                  userInfo.userName,
+                                              Config.commentsId:
+                                                  "comment_${allComments.length + 1}"
+                                            });
+                                            setState(() {
+                                              sent = true;
+                                            });
+                                          }
+                                        },
+                                      )
+                                    : Padding(
+                                        padding: EdgeInsets.all(5),
+                                        child: CircularProgressIndicator(
+                                          backgroundColor: Colors.white,
+                                        ))
                               ],
                             ),
                           ),
                         ),
-                        // _showEmojiPicker && _showTextInput
-                        //     ? EmojiPicker(
-                        //         bgColor: Colors.green,
-                        //         indicatorColor: Colors.white,
-                        //         recommendKeywords: recommendedEmojis,
-                        //         onEmojiSelected: (emoji, category) {
-                        //           print(
-                        //               emoji.name + " " + category.toString());
-                        //           commentController.text += emoji.emoji;
-                        //           setState(() {
-                        //             recommendedEmojis.add(emoji.name);
-                        //           });
-                        //         },
-                        //       )
-                        //     : Container()
                       ],
                     )
                   : Container()
@@ -478,22 +703,6 @@ class _HymCommentsState extends State<HymComments> {
         ),
       ),
     );
-  }
-
-  BorderRadius _bubbleBorder(String sender) {
-    if (sender == currUser.uid) {
-      return BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(0),
-          bottomLeft: Radius.circular(20),
-          bottomRight: Radius.circular(20));
-    } else {
-      return BorderRadius.only(
-          topLeft: Radius.circular(0),
-          topRight: Radius.circular(20),
-          bottomLeft: Radius.circular(20),
-          bottomRight: Radius.circular(20));
-    }
   }
 
   String _timeAgo(Timestamp postTime) {
@@ -521,10 +730,11 @@ class _HymCommentsState extends State<HymComments> {
 }
 
 class NavItem extends StatefulWidget {
-  NavItem(this.icon, this.title, this.action);
+  NavItem(this.icon, this.title, this.action, {this.color: Colors.white});
   final IconData icon;
   final String title;
   final Function action;
+  final Color color;
 
   @override
   State<NavItem> createState() {
@@ -533,12 +743,10 @@ class NavItem extends StatefulWidget {
 }
 
 class _NavItemState extends State<NavItem> {
-  bool _liked;
   String _title;
   @override
   void initState() {
     super.initState();
-    _liked = false;
     _title = widget.title;
   }
 
@@ -548,10 +756,9 @@ class _NavItemState extends State<NavItem> {
         padding: EdgeInsets.symmetric(vertical: 5, horizontal: 10),
         child: Row(
           children: <Widget>[
-            Icon(
-              widget.icon,
-              color: !_liked ? Colors.white : Colors.pink,
-            ),
+            Icon(widget.icon, color: widget.color
+                //!_liked ? Colors.white : Colors.pink,
+                ),
             SizedBox(
               width: 5,
             ),
@@ -563,20 +770,7 @@ class _NavItemState extends State<NavItem> {
         ),
       ),
       onTap: () {
-        if (widget.title == "Like") {
-          setState(() {
-            _liked = !_liked;
-
-            if (_liked) {
-              _title = _title + "d";
-            } else {
-              _title = widget.title;
-            }
-          });
-          widget.action();
-        } else {
-          widget.action();
-        }
+        widget.action();
       },
     );
   }

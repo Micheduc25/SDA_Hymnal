@@ -37,6 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
           appBarTheme: AppBarTheme(
               textTheme: TextTheme(
                   title: TextStyle(color: Colors.white, fontSize: 20)))),
+      debugShowCheckedModeBanner: false,
       title: 'homepage',
       home: Scaffold(
         drawer: Drawer(
@@ -203,12 +204,9 @@ class _HomeScreenBodyState extends State<HomeScreenBody> {
                           child: Choice(
                             image: "a_z.png",
                             onClick: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
+                              Navigator.of(context).push(MaterialPageRoute(
                                   builder: (context) =>
-                                      AlphabeticSearchScreen())
-                                      
-                                      );
+                                      AlphabeticSearchScreen()));
                             },
                           ),
                         ),
@@ -240,7 +238,7 @@ class _HomeScreenBodyState extends State<HomeScreenBody> {
                     ),
                   ),
                 ),
-                Text("Praise God with all Instruments...")
+                Text("Praise God with Hyms...")
               ],
             ),
             Center(

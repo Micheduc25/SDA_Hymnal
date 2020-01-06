@@ -20,6 +20,7 @@ class _MyAppState extends State<MyApp> {
           'splash': (context) => SplashScreen(),
           'home': (context) => HomeScreen()
         },
+        debugShowCheckedModeBanner: false,
         title: 'SDA Hym App',
         theme: ThemeData(
           primarySwatch: Colors.blue,

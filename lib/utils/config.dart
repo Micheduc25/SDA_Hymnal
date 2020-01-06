@@ -15,4 +15,7 @@ class Config {
   static String sender = "sender";
   static String commentPic = "commentPic";
   static String senderName = "senderName";
+  static String likers = "likers";
+  static String repliesId = "repliesId";
+  static String replyId = "replyId";
 }

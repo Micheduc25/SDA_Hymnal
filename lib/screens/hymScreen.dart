@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:connectivity/connectivity.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -125,42 +126,54 @@ class _HymScreenState extends State<HymScreen> {
                 ],
               ),
               onPressed: () async {
-                FirebaseUser currentUser = await _auth.currentUser();
+                ConnectivityResult connection =
+                    await Connectivity().checkConnectivity();
+                if (connection != ConnectivityResult.none) {
+                  FirebaseUser currentUser = await _auth.currentUser();
 
-                if (currentUser != null) {
-                  Navigator.of(context).push(MaterialPageRoute(
-                      builder: (context) => MultiProvider(
-                            providers: [
-                              StreamProvider.value(
-                                value: StreamHymComments.instance()
-                                    .streamHymComments(widget.number),
-                                catchError: (context, err) {
-                                  print("an error occured $err");
-                                },
+                  if (currentUser != null) {
+                    Navigator.of(context).push(MaterialPageRoute(
+                        builder: (context) => MultiProvider(
+                              providers: [
+                                StreamProvider.value(
+                                  value: StreamHymComments.instance()
+                                      .streamHymComments(widget.number),
+                                  catchError: (context, err) {
+                                    print("an error occured $err");
+                                  },
+                                ),
+                                StreamProvider.value(
+                                  value: StreamHymComments.instance()
+                                      .streamHymModel(widget.number),
+                                  catchError: (context, err) {
+                                    print(
+                                        "an error occured on hymmodel stream  ${err.toString()}");
+                                  },
+                                ),
+                                StreamProvider.value(
+                                  value: ProfileProvider.instance()
+                                      .streamUserProfile(currentUser.uid),
+                                  catchError: (context, err) {
+                                    print(
+                                        "an error occured on usermodel stream");
+                                  },
+                                )
+                              ],
+                              child: HymComments(
+                                hymNumber: widget.number,
                               ),
-                              StreamProvider.value(
-                                value: StreamHymComments.instance()
-                                    .streamHymModel(widget.number),
-                                catchError: (context, err) {
-                                  print("an error occured on hymmodel stream");
-                                },
-                              ),
-                              StreamProvider.value(
-                                value: ProfileProvider.instance()
-                                    .streamUserProfile(currentUser.uid),
-                                catchError: (context, err) {
-                                  print("an error occured on usermodel stream");
-                                },
-                              )
-                            ],
-                            child: HymComments(
-                              hymNumber: widget.number,
-                            ),
-                          ))); //change this to the comments screen for this particular hym
-                  print(currentUser.uid.toString());
+                            ))); //change this to the comments screen for this particular hym
+                    print(currentUser.uid.toString());
+                  } else {
+                    NotificationDialog.showMyDialogue(
+                        "Login", "Please login and try again", context,
+                        positive: false);
+                  }
                 } else {
                   NotificationDialog.showMyDialogue(
-                      "Login", "Please login and try again", context,
+                      "Network Error",
+                      "Please check your internet connection and try again",
+                      context,
                       positive: false);
                 }
               },

@@ -1,39 +1,38 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sda_hymnal/utils/config.dart';
 
-class CommentModel {
-  CommentModel(
+class ReplyModel {
+  ReplyModel(
       {this.date,
       this.likes,
       this.content,
       this.sender,
-      this.commentPic,
       this.senderName,
-      this.likers,
-      this.commentId,
-      this.repliesId});
-  final String commentId;
+      this.replyId,
+      this.commentPic,
+      this.likers});
   final Timestamp date;
   final String content;
   final int likes;
   final String sender;
   final String commentPic;
-  final String senderName;
-  final List<String> likers;
-  final String repliesId;
 
-  factory CommentModel.fromFirestore(DocumentSnapshot snapshot) {
-    return CommentModel(
+  final String senderName;
+
+  final String replyId;
+  final List<String> likers;
+
+  factory ReplyModel.fromFirestore(DocumentSnapshot snapshot) {
+    return ReplyModel(
         date: snapshot.data[Config.date] ?? "",
         content: snapshot.data[Config.content] ?? "",
         likes: snapshot.data[Config.likes] ?? 0,
         sender: snapshot.data[Config.sender] ?? "",
-        commentPic: snapshot.data[Config.commentPic] ?? "",
-        senderName: snapshot.data[Config.senderName] ?? "",
-        repliesId: snapshot.data[Config.repliesId] ?? "",
+        replyId: snapshot.data[Config.replyId],
         likers: snapshot.data[Config.likers] != null
             ? List.from(snapshot.data[Config.likers]) ?? []
             : [],
-        commentId: snapshot.data[Config.commentsId] ?? "");
+        commentPic: snapshot.data[Config.commentPic] ?? "",
+        senderName: snapshot.data[Config.senderName] ?? "");
   }
 }
