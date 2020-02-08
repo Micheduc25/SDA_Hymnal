@@ -1,15 +1,10 @@
 import 'dart:async';
-import 'dart:io';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:emoji_picker/emoji_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import 'package:sda_hymnal/db/dbConnection.dart';
+
 import 'package:sda_hymnal/models/commentsModel.dart';
 import 'package:sda_hymnal/models/hymOnlineModel.dart';
 import 'package:sda_hymnal/models/userModel.dart';
@@ -20,6 +15,7 @@ import 'package:sda_hymnal/utils/config.dart';
 import 'package:sda_hymnal/utils/timeStream.dart';
 import 'package:flutter/services.dart';
 import 'package:share/share.dart';
+import 'package:timeago/timeago.dart' as timeago;
 
 class HymComments extends StatefulWidget {
   HymComments({this.hymNumber});
@@ -38,7 +34,6 @@ class _HymCommentsState extends State<HymComments> {
   DateTime now;
   StreamSubscription _nowTime;
   DocumentReference _hymRef;
-  bool _showEmojiPicker;
   List<String> recommendedEmojis;
   FocusNode textInputFocus;
   StorageReference _userStorageReference;
@@ -48,7 +43,6 @@ class _HymCommentsState extends State<HymComments> {
   @override
   void initState() {
     super.initState();
-    _showEmojiPicker = false;
     now = DateTime.now();
     textInputFocus = FocusNode();
     sent = true;
@@ -264,24 +258,10 @@ class _HymCommentsState extends State<HymComments> {
                                 .snapshots()
                                 .length
                                 .then((length) {
-                                  numberOfComments = length;
-                                print(numberOfComments);
-                                setState(() {
-                                
+                              numberOfComments = length;
+                              print(numberOfComments);
+                              setState(() {});
                             });
-                              });
-                              
-                            // String senderName = "";
-
-                            // _firestore
-                            //     .collection("users")
-                            //     .document(allComments[index].sender)
-                            //     .get()
-                            //     .then((doc) {
-                            //   setState(() {
-                            //     senderName = doc.data[Config.userName];
-                            //   });
-                            // });
 
                             return Align(
                                 alignment: Alignment.center,
@@ -377,7 +357,7 @@ class _HymCommentsState extends State<HymComments> {
                                                 child: Row(
                                                   children: <Widget>[
                                                     Text(
-                                                      "${numberOfComments.toString()}",
+                                                      "${allComments[index].replies}",
                                                       style: TextStyle(
                                                           color: Colors.white),
                                                     ),
@@ -491,6 +471,9 @@ class _HymCommentsState extends State<HymComments> {
                                                                     Config
                                                                         .likes] +
                                                                 1
+                                                          }).catchError((err) {
+                                                            print(
+                                                                "could not update likes for this comment PE");
                                                           });
                                                         });
 
@@ -707,25 +690,12 @@ class _HymCommentsState extends State<HymComments> {
 
   String _timeAgo(Timestamp postTime) {
     DateTime convertedPostTime = postTime.toDate();
+
     Duration diff = now.difference(convertedPostTime);
 
-    int minutes = diff.inMinutes;
+    DateTime difference = DateTime.now().subtract(diff);
 
-    if (minutes == 0) {
-      return 'some seconds ago';
-    } else if (minutes < 60) {
-      return "${minutes.toString()} minute${minutes > 1 ? 's' : ''} ago";
-    } else if (minutes < 1440) {
-      return "${(minutes / 60).floor().toString()} hour${minutes > (60 * 2) - 1 ? 's' : ''} ago";
-    } else if (minutes < 10080) {
-      return "${(minutes / (60 * 24 * 7)).floor().toString()} day${minutes > (1440 * 2) - 1 ? 's' : ''} ago";
-    } else if (minutes < 40320) {
-      return "${(minutes / (60 * 24 * 7 * 4)).floor().toString()} week${minutes > (10080 * 2) - 1 ? 's' : ""}";
-    } else if (minutes < 524160) {
-      return "${(DateTime.now().month - convertedPostTime.month).toString()} month${minutes > (40320 * 2) - 1 ? 's' : ""}";
-    } else {
-      return "${(DateTime.now().year - convertedPostTime.year).toString()} year${minutes > (524160 * 2) - 1 ? 's' : ""}";
-    }
+    return timeago.format(difference);
   }
 }
 

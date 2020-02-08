@@ -17,7 +17,7 @@ class ReplyModel {
   final String sender;
   final String commentPic;
 
-  final String senderName;
+  String senderName;
 
   final String replyId;
   final List<String> likers;

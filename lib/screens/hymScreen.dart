@@ -395,6 +395,15 @@ class _HymScreenState extends State<HymScreen> {
                                     fontSize: 22 * globalFontRatio,
                                     fontWeight: FontWeight.w900),
                               ),
+                              SizedBox(
+                                height: 10,
+                              ),
+                              Text(
+                                "Key : ",
+                                style: TextStyle(
+                                    fontSize: 22 * globalFontRatio,
+                                    fontWeight: FontWeight.w900),
+                              ),
                               Padding(
                                 padding: EdgeInsets.only(bottom: 20),
                               ),

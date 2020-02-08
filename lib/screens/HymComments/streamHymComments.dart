@@ -16,9 +16,15 @@ class StreamHymComments {
         .collection("comments")
         .snapshots()
         .map((snapshot) {
-      return snapshot.documents
+      List<CommentModel> comments = snapshot.documents
           .map((docSnapshot) => CommentModel.fromFirestore(docSnapshot))
           .toList();
+      comments.forEach((item) {
+        firestore.collection("users").document(item.sender).get().then((doc) {
+          item.senderName = doc.data["userName"];
+        });
+      });
+      return comments;
     });
   }
 
@@ -32,9 +38,17 @@ class StreamHymComments {
         .collection("replies")
         .snapshots()
         .map((snapshot) {
-      return snapshot.documents
+      List<ReplyModel> replies = snapshot.documents
           .map((docSnapshot) => ReplyModel.fromFirestore(docSnapshot))
           .toList();
+
+      replies.forEach((reply) {
+        firestore.collection("users").document(reply.sender).get().then((doc) {
+          reply.senderName = doc.data["userName"];
+        });
+      });
+
+      return replies;
     });
   }
 

@@ -18,4 +18,5 @@ class Config {
   static String likers = "likers";
   static String repliesId = "repliesId";
   static String replyId = "replyId";
+  static String key = "key";
 }

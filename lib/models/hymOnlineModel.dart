@@ -8,7 +8,8 @@ class OnlineHym {
       this.title,
       this.number,
       this.commentsId,
-      this.likers});
+      this.likers,
+      this.key});
 
   final String title;
   final int number;
@@ -16,6 +17,7 @@ class OnlineHym {
   final int likes;
   final String commentsId;
   final List<String> likers;
+  final String key;
 
   factory OnlineHym.fromFirestore(DocumentSnapshot snapshot) {
     return OnlineHym(
@@ -24,6 +26,7 @@ class OnlineHym {
         author: snapshot.data[Config.hymAuthor] ?? "",
         likes: snapshot.data[Config.likes] ?? 0,
         commentsId: snapshot.data[Config.commentsId] ?? "",
+        key: snapshot.data[Config.key] ?? "",
         likers: snapshot.data[Config.likers] != null
             ? List.from(snapshot.data[Config.likers]) ?? []
             : []);

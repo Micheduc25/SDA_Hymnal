@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:sda_hymnal/components/appDrawer.dart';
 import 'package:sda_hymnal/models/userModel.dart';
@@ -39,7 +40,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   StreamingSharedPreferences _prefs;
   bool _loading;
   GlobalKey<ScaffoldState> _scaffoldKey;
-
+  bool updating;
   StorageReference ref;
 
   FirebaseAuth _auth;
@@ -56,6 +57,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _loggedIn = true;
     _loading = false;
     _scaffoldKey = GlobalKey();
+    updating = false;
 
     _authState = _auth.onAuthStateChanged.listen((user) {
       if (user == null) {
@@ -481,12 +483,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
     TextEditingController myController = TextEditingController();
     GlobalKey<FormState> key = GlobalKey();
     showDialog(
+        barrierDismissible: false,
         context: context,
         builder: (context) {
           return SimpleDialog(
-            title: Text(
-              "Edit $field",
-              textAlign: TextAlign.center,
+            title: Row(
+              mainAxisSize: MainAxisSize.max,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[
+                Text(
+                  "Edit $field",
+                  textAlign: TextAlign.center,
+                ),
+                !updating
+                    ? InkWell(
+                        child: Icon(
+                          Icons.close,
+                          color: Colors.red,
+                          size: 20,
+                        ),
+                        onTap: () {
+                          Navigator.of(context, rootNavigator: true).pop();
+                        },
+                      )
+                    : Container()
+              ],
             ),
             children: <Widget>[
               Form(
@@ -496,6 +517,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Column(
                     children: <Widget>[
                       TextFormField(
+                        autofocus: true,
                         textAlign: TextAlign.center,
                         controller: myController,
                         validator: (value) {
@@ -513,83 +535,120 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       SizedBox(
                         height: 20,
                       ),
-                      RaisedButton(
-                        child: Text(
-                          "Update Info",
-                          style: TextStyle(color: Colors.white, fontSize: 18),
-                        ),
-                        padding:
-                            EdgeInsets.symmetric(vertical: 10, horizontal: 30),
-                        color: Colors.green,
-                        onPressed: () async {
-                          if (key.currentState.validate()) {
-                            if (field == Config.userName) {
-                              await _firestore
-                                  .collection("users")
-                                  .document("${widget.userId}")
-                                  .updateData({
-                                Config.userName: myController.text
-                              }).catchError((Object err) {
-                                showMyDialogue(
-                                    "Update Error",
-                                    "Sorry an error occured while updating your username",
-                                    context,
-                                    positive: false);
-                              });
+                      !updating
+                          ? RaisedButton(
+                              child: Text(
+                                "Update Info",
+                                style: TextStyle(
+                                    color: Colors.white, fontSize: 18),
+                              ),
+                              padding: EdgeInsets.symmetric(
+                                  vertical: 10, horizontal: 30),
+                              color: Colors.green,
+                              onPressed: () async {
+                                if (key.currentState.validate()) {
+                                  setState(() {
+                                    updating = true;
+                                  });
+                                  if (field == Config.userName) {
+                                    await _firestore
+                                        .collection("users")
+                                        .document("${widget.userId}")
+                                        .updateData({
+                                      Config.userName: myController.text
+                                    }).catchError((Object err) {
+                                      showMyDialogue(
+                                          "Update Error",
+                                          "Sorry an error occured while updating your username",
+                                          context,
+                                          positive: false);
+                                    });
 
-                              await widget.settings.userName
-                                  .setValue(myController.text);
+                                    //for each of those comments we update the sender name
 
-                              Navigator.of(context).pop();
-                            } else {
-                              String status = await AuthProvider.instance()
-                                  .editEmail(myController.text);
+                                    //we do same with the replies
+                                    // await _firestore
+                                    //     .collection("comments")
+                                    //     .snapshots()
+                                    //     .forEach((snapshot) {
+                                    //   snapshot.documents.forEach((hymdoc) {
+                                    //     hymdoc.reference
+                                    //         .collection("replies")
+                                    //         .snapshots()
+                                    //         .forEach((rSnapshot) {
+                                    //       rSnapshot.documents.forEach((replyDoc) {
 
-                              if (status == "email sent") {
-                                if (settings.email.getValue() != "" ||
-                                    settings.password.getValue() != "") {
-                                  settings.email.setValue(myController.text);
+                                    //       });
+                                    //     });
+                                    //   });
+                                    // });
+
+                                    await widget.settings.userName
+                                        .setValue(myController.text);
+
+                                    Navigator.of(context, rootNavigator: true)
+                                        .pop();
+                                  } else {
+                                    String status =
+                                        await AuthProvider.instance()
+                                            .editEmail(myController.text);
+
+                                    if (status == "email sent") {
+                                      if (settings.email.getValue() != "" ||
+                                          settings.password.getValue() != "") {
+                                        settings.email
+                                            .setValue(myController.text);
+                                      }
+                                      settings.updateMode.setValue("update");
+                                      Navigator.of(context)
+                                          .pushReplacement(MaterialPageRoute(
+                                              builder: (context) => VerifyEmail(
+                                                    userName: userdata.userName,
+                                                    email: myController.text,
+                                                    mode: "update",
+                                                    settings: settings,
+                                                  )));
+                                    } else if (status == "login timeout") {
+                                      if (settings.email.getValue() != "" &&
+                                          settings.password.getValue() != "") {
+                                        await AuthProvider.instance().loginUser(
+                                            settings.email.getValue(),
+                                            settings.password.getValue());
+
+                                        FirebaseUser user =
+                                            await _auth.currentUser();
+                                        final String uid = user.uid;
+
+                                        Navigator.of(context).push(
+                                            MaterialPageRoute(
+                                                builder: (context) =>
+                                                    ProfileScreen(
+                                                        userId: uid)));
+                                      } else {
+                                        Navigator.of(context).pushReplacement(
+                                            MaterialPageRoute(
+                                                builder: (context) =>
+                                                    LoginScreen(
+                                                        settings: settings)));
+                                      }
+                                    } else {
+                                      Navigator.of(context).pop();
+                                      showMyDialogue(
+                                          "Email Update Error",
+                                          "An error occured while trying to update your email, please make sure the email is correct or try to login again",
+                                          context,
+                                          positive: false);
+                                    }
+                                  }
+                                  setState(() {
+                                    updating = false;
+                                  });
                                 }
-                                settings.updateMode.setValue("update");
-                                Navigator.of(context)
-                                    .pushReplacement(MaterialPageRoute(
-                                        builder: (context) => VerifyEmail(
-                                              userName: userdata.userName,
-                                              email: myController.text,
-                                              mode: "update",
-                                              settings: settings,
-                                            )));
-                              } else if (status == "login timeout") {
-                                if (settings.email.getValue() != "" &&
-                                    settings.password.getValue() != "") {
-                                  await AuthProvider.instance().loginUser(
-                                      settings.email.getValue(),
-                                      settings.password.getValue());
-
-                                  FirebaseUser user = await _auth.currentUser();
-                                  final String uid = user.uid;
-
-                                  Navigator.of(context).push(MaterialPageRoute(
-                                      builder: (context) =>
-                                          ProfileScreen(userId: uid)));
-                                } else {
-                                  Navigator.of(context).pushReplacement(
-                                      MaterialPageRoute(
-                                          builder: (context) =>
-                                              LoginScreen(settings: settings)));
-                                }
-                              } else {
-                                Navigator.of(context).pop();
-                                showMyDialogue(
-                                    "Email Update Error",
-                                    "An error occured while trying to update your email, please make sure the email is correct or try to login again",
-                                    context,
-                                    positive: false);
-                              }
-                            }
-                          }
-                        },
-                      )
+                              },
+                            )
+                          : CircularProgressIndicator(
+                              backgroundColor: Colors.white,
+                            )
                     ],
                   ),
                 ),

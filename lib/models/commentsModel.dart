@@ -11,16 +11,18 @@ class CommentModel {
       this.senderName,
       this.likers,
       this.commentId,
-      this.repliesId});
+      this.repliesId,
+      this.replies});
   final String commentId;
   final Timestamp date;
   final String content;
   final int likes;
   final String sender;
   final String commentPic;
-  final String senderName;
+  String senderName;
   final List<String> likers;
   final String repliesId;
+  int replies;
 
   factory CommentModel.fromFirestore(DocumentSnapshot snapshot) {
     return CommentModel(
@@ -34,6 +36,7 @@ class CommentModel {
         likers: snapshot.data[Config.likers] != null
             ? List.from(snapshot.data[Config.likers]) ?? []
             : [],
-        commentId: snapshot.data[Config.commentsId] ?? "");
+        commentId: snapshot.data[Config.commentsId] ?? "",
+        replies: snapshot.data["replies"] ?? 0);
   }
 }
