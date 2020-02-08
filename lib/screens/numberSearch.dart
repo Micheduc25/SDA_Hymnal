@@ -2,17 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:sda_hymnal/components/appDrawer.dart';
 import 'package:sda_hymnal/db/dbConnection.dart';
 import 'package:sda_hymnal/screens/hymScreen.dart';
-import 'package:sda_hymnal/screens/numberSearch.dart';
+import 'package:sda_hymnal/screens/wordSearch.dart';
 import 'package:sda_hymnal/utils/helperFunctions.dart';
 import 'package:sda_hymnal/utils/preferences/preferences.dart';
 import 'package:streaming_shared_preferences/streaming_shared_preferences.dart';
 
-class SearchScreen extends StatefulWidget {
+class NumberSearchScreen extends StatefulWidget {
   @override
-  _SearchScreenState createState() => _SearchScreenState();
+  _NumberSearchScreenState createState() => _NumberSearchScreenState();
 }
 
-class _SearchScreenState extends State<SearchScreen> {
+class _NumberSearchScreenState extends State<NumberSearchScreen> {
   TextEditingController searchTextController;
   bool _loading;
   List<Map<String, dynamic>> hyms;
@@ -45,42 +45,44 @@ class _SearchScreenState extends State<SearchScreen> {
           appBarTheme: AppBarTheme(
               textTheme: TextTheme(
                   title: TextStyle(color: Colors.white, fontSize: 20)))),
-      title: 'Search Screen',
+      title: 'Number Search Screen',
       home: Scaffold(
         appBar: AppBar(
-          title: Text("Search by Title"),
+          title: Text("Search by Number"),
           centerTitle: true,
           automaticallyImplyLeading: true,
           actions: <Widget>[
-            PopupMenuButton(
+             PopupMenuButton(
+                
                 elevation: 4,
                 icon: Icon(
                   Icons.more_vert,
                   color: Colors.white,
                 ),
-                itemBuilder: (context) => [
-                      PopupMenuItem(
-                          value: "number",
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: <Widget>[
-                              Icon(
-                                Icons.format_list_numbered,
-                                color: Colors.green,
-                              ),
-                              SizedBox(
-                                width: 8,
-                              ),
-                              Text("Search by Number")
-                            ],
-                          ))
-                    ],
+                itemBuilder:(context)=> [
+                  PopupMenuItem (
+                      value: "word",
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          Icon(
+                            Icons.sort_by_alpha,
+                            color: Colors.green,
+                          ),
+                          SizedBox(
+                            width: 8,
+                          ),
+                          Text("Search by Title")
+                        ],
+                      ))
+                ],
                 onSelected: (val) {
-                  if (val == "number") {
-                    Navigator.of(context)
-                        .push(MaterialPageRoute(builder: (context) {
-                      return NumberSearchScreen();
-                    }));
+                  if (val == "word") {
+                     Navigator.of(context).push(
+                      MaterialPageRoute(builder: (context){
+                        return SearchScreen();
+                      })
+                    );
                   }
                 })
           ],
@@ -98,15 +100,16 @@ class _SearchScreenState extends State<SearchScreen> {
               children: <Widget>[
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 20),
-                  child: Text("Enter the title of the hym you are looking for"),
+                  child: Text("Enter the number of the hym you are looking for"),
                 ),
                 Row(children: [
                   Expanded(
                     child: TextField(
                       controller: searchTextController,
                       autofocus: true,
+                      keyboardType: TextInputType.number,
                       decoration: InputDecoration(
-                          hintText: "Title",
+                          hintText: "Number",
                           filled: true,
                           fillColor: Colors.grey[300],
                           contentPadding: EdgeInsets.all(10),
@@ -114,21 +117,27 @@ class _SearchScreenState extends State<SearchScreen> {
                               borderRadius: BorderRadius.circular(5),
                               borderSide: BorderSide(color: Colors.grey[300]))),
                       onChanged: (value) async {
-                        if (searchTextController.text.isNotEmpty) {
-                          await HelperFunctions.getHymsByTitle(value)
-                              .then((songs) {
+
+                        if(searchTextController.text.isNotEmpty){
+                        await HelperFunctions.filterHymsByNumber(int.parse(value)).then((fHyms){
                             setState(() {
-                              hyms = songs;
-                              // print(hyms.toString());
+
+                              
+                               hyms = fHyms;
                             });
-                          });
-                        } else {
-                          await DBConnect().getHyms().then((h) {
-                            setState(() {
-                              hyms = h;
-                            });
+                           
+                        });
+                        
+                        }
+                        else{
+
+                          var thehyms = await DBConnect().getHyms();
+                          setState(() {
+                            hyms = thehyms;
                           });
                         }
+
+                            
                       },
                     ),
                   ),
@@ -154,10 +163,11 @@ class _SearchScreenState extends State<SearchScreen> {
                       onPressed: () {
                         if (searchTextController.text.isNotEmpty) {
                           searchTextController.clear();
-                          setState(() {
+                          
+                        }
+                        setState(() {
                             hyms = null;
                           });
-                        }
                       })
                 ]),
                 Padding(

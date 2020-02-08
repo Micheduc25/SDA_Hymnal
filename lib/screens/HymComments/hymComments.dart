@@ -142,7 +142,7 @@ class _HymCommentsState extends State<HymComments> {
                         Text(
                           allComments != null
                               ? "${allComments.length.toString()} comments"
-                              : "",
+                              : "0 comments",
                           style: TextStyle(color: Colors.white),
                         ) //replace y later
                       ],

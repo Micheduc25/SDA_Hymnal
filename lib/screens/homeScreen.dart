@@ -148,7 +148,7 @@ class _HomeScreenBodyState extends State<HomeScreenBody> {
                                     backgroundColor: Colors.green,
                                     duration: Duration(seconds: 4),
                                     content: Text(
-                                        "The Hym given does not exist please try again"),
+                                        "The Hym given has not yet been uploaded please try later"),
                                   ));
                                 } else {
                                   Navigator.of(context).push(

@@ -10,7 +10,6 @@ import 'package:sda_hymnal/db/dbConnection.dart';
 import 'package:sda_hymnal/provider/profileProvider.dart';
 import 'package:sda_hymnal/screens/HymComments/hymComments.dart';
 import 'package:sda_hymnal/screens/HymComments/streamHymComments.dart';
-import 'package:sda_hymnal/screens/homeScreen.dart';
 import 'package:sda_hymnal/utils/preferences/preferences.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:streaming_shared_preferences/streaming_shared_preferences.dart';
@@ -391,15 +390,6 @@ class _HymScreenState extends State<HymScreen> {
                               Text(
                                 "${widget.number} - ${widget.title}",
                                 textAlign: TextAlign.center,
-                                style: TextStyle(
-                                    fontSize: 22 * globalFontRatio,
-                                    fontWeight: FontWeight.w900),
-                              ),
-                              SizedBox(
-                                height: 10,
-                              ),
-                              Text(
-                                "Key : ",
                                 style: TextStyle(
                                     fontSize: 22 * globalFontRatio,
                                     fontWeight: FontWeight.w900),

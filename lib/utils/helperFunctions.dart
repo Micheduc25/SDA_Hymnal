@@ -56,6 +56,21 @@ class HelperFunctions {
     return hymn;
   }
 
+  static Future<List<Map<String,dynamic>>> filterHymsByNumber(int number)async{
+    List<Map<String,dynamic>> filteredHyms;
+    var hyms = await DBConnect().getHyms();
+    filteredHyms= hyms.where((hym){
+      if(hym['number'].toString().contains(number.toString())){
+        return true;
+      }
+      else{
+        return false;
+      }
+    }).toList();
+
+    return filteredHyms;
+  }
+
   static Future<List<Map<String, dynamic>>> getHymsByNumbers(
       List<int> numbers) async {
     List<Map<String, dynamic>> hyms = await DBConnect().getHyms();
