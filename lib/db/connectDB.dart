@@ -27,6 +27,7 @@ class ConnectDB {
 
           //when database is reopened
           onOpen: (db) async {
+    print("DB Opened!");
     // try {
     //   await db.execute("DROP TABLE hyms");
     //   await db.execute("DROP TABLE local_hyms");
