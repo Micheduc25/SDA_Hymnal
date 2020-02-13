@@ -5,7 +5,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:sda_hymnal/components/appDrawer.dart';
 import 'package:sda_hymnal/models/userModel.dart';
@@ -255,25 +254,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   });
                                 }
                               },
-                              child: CircleAvatar(
-                                backgroundImage: userdata != null
-                                    ? userdata.profilePicUrl != null
-                                        ? NetworkImage(userdata.profilePicUrl)
-                                        : null
-                                    : null,
-                                backgroundColor: Colors.green,
-                                minRadius: 50,
-                                maxRadius: 50,
-                                child: userdata != null
-                                    ? userdata.profilePicUrl == null
-                                        ? Text(
-                                            userdata.userName[0].toUpperCase(),
-                                            style: TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 30),
-                                          )
-                                        : Container()
-                                    : null,
+                              child: Hero(
+                                tag: "profile",
+                                child: CircleAvatar(
+                                  backgroundImage: userdata != null
+                                      ? userdata.profilePicUrl != null
+                                          ? NetworkImage(userdata.profilePicUrl)
+                                          : null
+                                      : null,
+                                  backgroundColor: Colors.green,
+                                  minRadius: 50,
+                                  maxRadius: 50,
+                                  child: userdata != null
+                                      ? userdata.profilePicUrl == null
+                                          ? Text(
+                                              userdata.userName[0]
+                                                  .toUpperCase(),
+                                              style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 30),
+                                            )
+                                          : Container()
+                                      : null,
+                                ),
                               ),
                             ),
                             _imageLoading
@@ -401,37 +404,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ],
               ),
               _preview
-                  ? Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(color: Colors.black54),
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          return Column(
-                            children: <Widget>[
-                              Container(
-                                  padding: EdgeInsets.symmetric(vertical: 5),
-                                  alignment: Alignment.centerRight,
-                                  child: IconButton(
-                                    icon:
-                                        Icon(Icons.close, color: Colors.white),
-                                    onPressed: () {
-                                      setState(() {
-                                        _preview = false;
-                                      });
-                                    },
-                                  )),
-                              Container(
-                                width: constraints.maxWidth * 0.9,
-                                height: constraints.maxHeight * 0.85,
-                                child: Image.network(
-                                    _imageUrl != null
-                                        ? _imageUrl
-                                        : userdata.profilePicUrl,
-                                    fit: BoxFit.cover),
-                              ),
-                            ],
-                          );
-                        },
+                  ? Hero(
+                      tag: "profile",
+                      child: Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(color: Colors.black54),
+                        child: LayoutBuilder(
+                          builder: (context, constraints) {
+                            return Column(
+                              children: <Widget>[
+                                Container(
+                                    padding: EdgeInsets.symmetric(vertical: 5),
+                                    alignment: Alignment.centerRight,
+                                    child: IconButton(
+                                      icon: Icon(Icons.close,
+                                          color: Colors.white),
+                                      onPressed: () {
+                                        setState(() {
+                                          _preview = false;
+                                        });
+                                      },
+                                    )),
+                                Container(
+                                  width: constraints.maxWidth * 0.9,
+                                  height: constraints.maxHeight * 0.85,
+                                  child: Image.network(
+                                      _imageUrl != null
+                                          ? _imageUrl
+                                          : userdata.profilePicUrl,
+                                      fit: BoxFit.cover),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
                       ),
                     )
                   : Container(),

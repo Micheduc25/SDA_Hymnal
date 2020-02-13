@@ -2,9 +2,11 @@ import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:sda_hymnal/provider/_authProvider.dart';
 import 'package:sda_hymnal/provider/profileProvider.dart';
+import 'package:sda_hymnal/screens/Help/helpScreen.dart';
 import 'package:sda_hymnal/screens/Login/login.dart';
 import 'package:sda_hymnal/screens/SignUp/confirmEmail.dart';
 import 'package:sda_hymnal/screens/SignUp/signUpScreen.dart';
@@ -258,7 +260,41 @@ class _MyDrawerState extends State<MyDrawer> {
                 Divider(
                   color: Colors.white,
                   thickness: 2,
-                )
+                ),
+                ListTile(
+                  leading: Icon(
+                    Icons.help,
+                    size: 40,
+                    color: Colors.white,
+                  ),
+                  title: Text("Help",
+                      style: TextStyle(color: Colors.white, fontSize: 20)),
+                  onTap: () {
+                    Navigator.of(context).push(
+                        MaterialPageRoute(builder: (context) => HelpScreen()));
+                  },
+                ),
+                Divider(
+                  color: Colors.white,
+                  thickness: 2,
+                ),
+                ListTile(
+                  leading: Icon(
+                    Icons.exit_to_app,
+                    size: 40,
+                    color: Colors.redAccent,
+                  ),
+                  title: Text("Exit App",
+                      style: TextStyle(color: Colors.white, fontSize: 20)),
+                  onTap: () async {
+                    await SystemChannels.platform
+                        .invokeMapMethod("SystemNavigator.pop");
+                  },
+                ),
+                Divider(
+                  color: Colors.white,
+                  thickness: 2,
+                ),
               ],
             ),
           ),
