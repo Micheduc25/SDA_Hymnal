@@ -287,8 +287,42 @@ class _MyDrawerState extends State<MyDrawer> {
                   title: Text("Exit App",
                       style: TextStyle(color: Colors.white, fontSize: 20)),
                   onTap: () async {
-                    await SystemChannels.platform
-                        .invokeMapMethod("SystemNavigator.pop");
+                    showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: Text("Exit sda_hymnal"),
+                            content: Text(
+                                "Are you sure you want to exit sda_hymnal??"),
+                            actions: <Widget>[
+                              RaisedButton(
+                                padding: EdgeInsets.symmetric(
+                                    vertical: 10, horizontal: 15),
+                                color: Colors.green,
+                                child: Text("Yes",
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold)),
+                                onPressed: () async {
+                                  await SystemChannels.platform
+                                      .invokeMapMethod("SystemNavigator.pop");
+                                },
+                              ),
+                              RaisedButton(
+                                padding: EdgeInsets.symmetric(
+                                    vertical: 10, horizontal: 15),
+                                color: Colors.green,
+                                child: Text("No",
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold)),
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                              )
+                            ],
+                          );
+                        });
                   },
                 ),
                 Divider(
